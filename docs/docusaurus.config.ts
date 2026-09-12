@@ -29,6 +29,7 @@ const config: Config = {
       'classic',
       {
         docs: {
+          path: 'concepts',
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/oryweave/oriweave/tree/develop/docs/',
