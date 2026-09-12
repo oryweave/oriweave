@@ -1,15 +1,15 @@
 ---
 slug: /
-title: StackDoc Docs
+title: Oriweave Docs
 ---
 
-# StackDoc Docs
+# Oriweave Docs
 
-Reference documentation for [StackDoc](https://stackdoc.kazuki.uk) — document your homelab
+Reference documentation for [Oriweave](https://oriweave.dev) — document your homelab
 as YAML, render it as a live topology.
 
 For the project pitch, features, and a quickstart, see the
-[README](https://github.com/thatkazuk1/infra-stackdoc#readme). This section covers what the
+[README](https://github.com/oryweave/oriweave#readme). This section covers what the
 README doesn't: the full local dev setup, the YAML schema, the codebase's layer boundaries,
 and runtime configuration.
 

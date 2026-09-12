@@ -41,9 +41,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@homelab-stackdoc/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -62,6 +59,9 @@ importers:
       '@nestjs/typeorm':
         specifier: ^11.0.1
         version: 11.0.1(@nestjs/common@11.0.1)(@nestjs/core@11.0.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(typeorm@0.3.28)
+      '@oriweave/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -162,15 +162,15 @@ importers:
       '@codemirror/view':
         specifier: ^6.40.0
         version: 6.40.0
-      '@homelab-stackdoc/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@homelab-stackdoc/renderer':
-        specifier: workspace:*
-        version: link:../../packages/renderer
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@oriweave/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@oriweave/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -264,7 +264,7 @@ importers:
 
   packages/renderer:
     dependencies:
-      '@homelab-stackdoc/core':
+      '@oriweave/core':
         specifier: workspace:*
         version: link:../core
       react:

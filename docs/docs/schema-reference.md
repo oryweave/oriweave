@@ -5,7 +5,7 @@ title: Schema Reference
 # Schema Reference
 
 The full schema lives in
-[`packages/core/src/types.ts`](https://github.com/thatkazuk1/infra-stackdoc/blob/develop/packages/core/src/types.ts).
+[`packages/core/src/types.ts`](https://github.com/oryweave/oriweave/blob/develop/packages/core/src/types.ts).
 
 Top-level sections:
 

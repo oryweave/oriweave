@@ -1,4 +1,4 @@
-import type { Device } from '@homelab-stackdoc/core'
+import type { Device } from '@oriweave/core'
 
 /**
  * Tiebreak order for representative-icon selection on collapsed

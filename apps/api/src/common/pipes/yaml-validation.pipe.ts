@@ -1,5 +1,5 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common'
-import { parse } from '@homelab-stackdoc/core'
+import { parse } from '@oriweave/core'
 
 @Injectable()
 export class YamlValidationPipe implements PipeTransform {

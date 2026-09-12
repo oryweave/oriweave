@@ -1,6 +1,6 @@
 import html2canvas from 'html2canvas'
 import React, { useState, useMemo, useCallback, useRef } from 'react'
-import { parse, layout } from '@homelab-stackdoc/core'
+import { parse, layout } from '@oriweave/core'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import { PreviewPane } from '../components/PreviewPane'

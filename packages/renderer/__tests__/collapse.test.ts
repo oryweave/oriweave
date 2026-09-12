@@ -7,7 +7,7 @@ import {
   countDevicesInGroup,
 } from '../src/lib/collapse'
 import { buildDevice, buildEdge, buildNode } from './fixtures'
-import type { Group, PositionedGroup } from '@homelab-stackdoc/core'
+import type { Group, PositionedGroup } from '@oriweave/core'
 
 describe('getGroupSubtreeIds', () => {
   it('returns just the root when the group has no children', () => {

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { colors, fonts } from '@homelab-stackdoc/renderer'
+import { colors, fonts } from '@oriweave/renderer'
 import { fetchGithubStats } from '../lib/api'
 import { UserMenu } from './UserMenu'
 
-const DOCS_URL = import.meta.env.VITE_DOCS_URL || 'http://stackdoc.localhost:3001'
+const DOCS_URL = import.meta.env.VITE_DOCS_URL || 'http://oriweave.localhost:3001'
 
 interface AppNavProps {
   title?: string
@@ -136,7 +136,7 @@ const DefaultNewDiagramButton: React.FC = () => {
   )
 }
 
-const GITHUB_URL = 'https://github.com/thatkazuk1/infra-stackdoc'
+const GITHUB_URL = 'https://github.com/oryweave/oriweave'
 
 // Compact numeric formatting for the star/fork counts (1234 -> "1.2k"), keeps the pill from
 // pushing the header layout around once real counts come in.
@@ -259,7 +259,7 @@ export const AppNav: React.FC<AppNavProps> = ({ title, kicker, primaryAction }) 
       }}
     >
       <span style={{ color: colors.primary }}>&gt;_</span>
-      stackdoc
+      oriweave
     </a>
 
     <span

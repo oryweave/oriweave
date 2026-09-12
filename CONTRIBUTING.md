@@ -1,4 +1,4 @@
-# Contributing to stackdoc
+# Contributing to oriweave
 
 Thanks for considering a contribution. This document captures the conventions this project
 actually uses, discovered from its own commit history, CI config, and tooling — not an
@@ -6,7 +6,7 @@ aspirational style guide.
 
 ## Before you start
 
-Open an [issue](https://github.com/thatkazuk1/infra-stackdoc/issues) describing the bug or
+Open an [issue](https://github.com/oryweave/oriweave/issues) describing the bug or
 feature so we can agree on the approach before code is written. See the [README](README.md) for
 what the project is, its architecture, and local dev setup (`make install` / `make infra` /
 `make dev`).

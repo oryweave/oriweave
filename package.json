@@ -1,8 +1,8 @@
 {
-  "name": "homelab-stackdoc",
+  "name": "oriweave",
   "private": true,
   "version": "0.7.0",
-  "description": "Homelab documentation tool — Document and share your setup",
+  "description": "Document, visualize, and share your homelab stack",
   "scripts": {
     "build": "make build",
     "dev": "make dev",

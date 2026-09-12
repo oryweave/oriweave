@@ -2,7 +2,7 @@ import React from 'react'
 import { colors, fonts, deviceAccent } from '../theme'
 import { getDeviceIconPath, getSpecIconPath } from '../icons'
 import { ServiceIcon } from './ServiceIcon'
-import type { Device, Connection, Service } from '@homelab-stackdoc/core'
+import type { Device, Connection, Service } from '@oriweave/core'
 
 interface DetailModalProps {
   child: Device

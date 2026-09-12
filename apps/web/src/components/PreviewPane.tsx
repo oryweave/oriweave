@@ -1,6 +1,6 @@
 import React from 'react'
-import { TopologyCanvas } from '@homelab-stackdoc/renderer'
-import type { PositionedGraph, ValidationError, Device, Connection } from '@homelab-stackdoc/core'
+import { TopologyCanvas } from '@oriweave/renderer'
+import type { PositionedGraph, ValidationError, Device, Connection } from '@oriweave/core'
 
 interface PreviewPaneProps {
   graph: PositionedGraph | null

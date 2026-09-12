@@ -1,4 +1,4 @@
-import type { PositionedEdge } from '@homelab-stackdoc/core'
+import type { PositionedEdge } from '@oriweave/core'
 
 /**
  * Focus-mode neighbour computation.

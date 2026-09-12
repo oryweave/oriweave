@@ -1,6 +1,6 @@
 import React from 'react'
 import { colors, fonts } from '../theme'
-import type { PositionedGroup } from '@homelab-stackdoc/core'
+import type { PositionedGroup } from '@oriweave/core'
 
 interface GroupOutlineProps {
   group: PositionedGroup

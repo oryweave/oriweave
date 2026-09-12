@@ -23,7 +23,7 @@ class ApiError extends Error {
 }
 
 const AUTH_INVALIDATED = 'auth:invalidated'
-const API_BASE = import.meta.env.VITE_API_URL || 'http://stackdoc.localhost:8087'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://oriweave.localhost:8087'
 const defaultInit: RequestInit = { credentials: 'include' }
 
 async function failedResponse(response: Response, fallback: string): Promise<never> {

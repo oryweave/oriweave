@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { ValidationError } from '@homelab-stackdoc/core'
+import type { ValidationError } from '@oriweave/core'
 import { CodeMirrorEditor } from './CodeMirrorEditor'
 import { EditorStatusBar } from './EditorStatusBar'
 

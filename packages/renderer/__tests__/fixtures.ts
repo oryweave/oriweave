@@ -1,4 +1,4 @@
-import type { Device, PositionedEdge, PositionedNode, Connection } from '@homelab-stackdoc/core'
+import type { Device, PositionedEdge, PositionedNode, Connection } from '@oriweave/core'
 
 export function buildDevice(overrides: Partial<Device> & { id: string }): Device {
   const { id, name, type, ...rest } = overrides
