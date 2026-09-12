@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic'
 const config: Config = {
   title: 'Oriweave',
   tagline: 'Document your homelab as YAML. Render it as a live topology.',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   future: {
     v4: true,
