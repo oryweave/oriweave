@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { colors, fonts, deviceAccent } from '../theme'
-import type { PositionedGraph } from '@homelab-stackdoc/core'
+import type { PositionedGraph } from '@oriweave/core'
 
 interface MinimapProps {
   graph: PositionedGraph

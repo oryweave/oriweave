@@ -7,8 +7,8 @@ title: Installation & Development
 ## Setting Up
 
 ```bash
-git clone https://github.com/thatkazuk1/infra-stackdoc.git
-cd infra-stackdoc
+git clone https://github.com/oryweave/oriweave.git
+cd oriweave
 ```
 
 ## Development
@@ -19,8 +19,8 @@ make infra          # start Postgres in Docker (one container)
 make dev            # start web (5173) and api (8087) in parallel
 ```
 
-Open [http://stackdoc.localhost:5173](http://stackdoc.localhost:5173) (not plain `localhost` — the api's CORS/OAuth config is
-pinned to the `stackdoc.localhost` origin by default; `.localhost` resolves to loopback with no
+Open [http://oriweave.localhost:5173](http://oriweave.localhost:5173) (not plain `localhost` — the api's CORS/OAuth config is
+pinned to the `oriweave.localhost` origin by default; `.localhost` resolves to loopback with no
 extra setup).
 
 ## Testing

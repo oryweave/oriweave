@@ -1,5 +1,5 @@
 import React from 'react'
-import type { ValidationError } from '@homelab-stackdoc/core'
+import type { ValidationError } from '@oriweave/core'
 
 interface EditorStatusBarProps {
   networkCount: number

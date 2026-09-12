@@ -1,5 +1,5 @@
 {
-  "name": "@homelab-stackdoc/core",
+  "name": "@oriweave/core",
   "version": "0.1.0",
   "private": true,
   "main": "dist/index.js",

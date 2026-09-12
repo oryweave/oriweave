@@ -1,4 +1,4 @@
-APP_NAME    := homelab-stackdoc
+APP_NAME    := oriweave
 PNPM        := pnpm
 COMPOSE 		:= docker compose
 
@@ -54,7 +54,7 @@ dev: build-packages
 	$(PNPM) --filter "./apps/**" --filter "./docs" --parallel run dev
 
 dev-api: build-packages ## Start the api server
-	$(PNPM) --filter "@homelab-stackdoc/api" run dev
+	$(PNPM) --filter "@oriweave/api" run dev
 
 dev-web: build-packages ## Start the web server
 	$(PNPM) --filter "./apps/web" run dev

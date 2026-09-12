@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { colors, fonts } from '../theme'
-import type { DeviceInterfaces } from '@homelab-stackdoc/core'
-import type { PortAssignment, EnumeratedPort } from '@homelab-stackdoc/core'
+import type { DeviceInterfaces } from '@oriweave/core'
+import type { PortAssignment, EnumeratedPort } from '@oriweave/core'
 
 interface PortStripProps {
   interfaces: DeviceInterfaces

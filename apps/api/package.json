@@ -1,5 +1,5 @@
 {
-  "name": "@homelab-stackdoc/api",
+  "name": "@oriweave/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@homelab-stackdoc/core": "workspace:*",
+    "@oriweave/core": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",

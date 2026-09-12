@@ -26,15 +26,15 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 COPY . .
 
 FROM deps AS web-builder
-RUN pnpm --filter @homelab-stackdoc/web... build
+RUN pnpm --filter @oriweave/web... build
 
 FROM deps AS docs-builder
-RUN pnpm --filter @homelab-stackdoc/docs build
+RUN pnpm --filter @oriweave/docs build
 
 FROM deps AS api-builder
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm --filter @homelab-stackdoc/api... build && \
-    pnpm --filter @homelab-stackdoc/api deploy /app/api-prod --prod
+    pnpm --filter @oriweave/api... build && \
+    pnpm --filter @oriweave/api deploy /app/api-prod --prod
 
 FROM nginx:alpine AS web
 

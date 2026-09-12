@@ -3,7 +3,7 @@ import { colors, fonts, deviceAccent } from '../theme'
 import { getDeviceIconPath, getSpecIconPath } from '../icons'
 import { PortStrip } from './PortStrip'
 import { ServiceIcon } from './ServiceIcon'
-import type { PositionedNode, Device, PortAssignment, EnumeratedPort } from '@homelab-stackdoc/core'
+import type { PositionedNode, Device, PortAssignment, EnumeratedPort } from '@oriweave/core'
 
 interface DeviceCardProps {
   node: PositionedNode

@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@homelab-stackdoc/core': path.resolve(__dirname, '../../packages/core/src'),
-      '@homelab-stackdoc/renderer': path.resolve(__dirname, '../../packages/renderer/src'),
+      '@oriweave/core': path.resolve(__dirname, '../../packages/core/src'),
+      '@oriweave/renderer': path.resolve(__dirname, '../../packages/renderer/src'),
     },
   },
   build: {

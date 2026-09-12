@@ -18,7 +18,7 @@ import { GroupOutline } from './GroupOutline'
 import { Minimap } from './Minimap'
 import { resolveSupernodeIcon } from '../lib/supernode-icon'
 import { SupernodePuck } from './SupernodePuck'
-import type { PositionedGraph, PositionedEdge, Device, Connection } from '@homelab-stackdoc/core'
+import type { PositionedGraph, PositionedEdge, Device, Connection } from '@oriweave/core'
 
 interface TopologyCanvasProps {
   graph: PositionedGraph

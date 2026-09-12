@@ -4,7 +4,7 @@ title: Architecture
 
 # Architecture
 
-stackdoc is a pnpm monorepo with strict layer boundaries.
+oriweave is a pnpm monorepo with strict layer boundaries.
 
 ```
 packages/

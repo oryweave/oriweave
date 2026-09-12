@@ -1,4 +1,4 @@
-import type { Device } from '@homelab-stackdoc/core'
+import type { Device } from '@oriweave/core'
 
 /**
  * Builds a flat Map of devices indexed by their ID for O(1) lookup.

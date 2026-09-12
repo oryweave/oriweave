@@ -3,8 +3,8 @@ import { type GitHubStats } from './github-stats.types'
 import { config } from '@/common/config'
 import { GitHubService } from '@/providers/github/github.service'
 
-const OWNER = 'thatkazuk1'
-const REPO = 'infra-stackdoc'
+const OWNER = 'oryweave'
+const REPO = 'oriweave'
 const TTL_MS = 30 * 60 * 1000
 // Floor between fetch attempts while GitHub is unreachable/rate-limited, so an outage doesn't
 // turn every incoming request into an outbound GitHub call.

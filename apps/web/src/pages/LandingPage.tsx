@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { parse, layout } from '@homelab-stackdoc/core'
-import { TopologyCanvas, colors, fonts } from '@homelab-stackdoc/renderer'
-import type { PositionedGraph, Device, Connection } from '@homelab-stackdoc/core'
+import { parse, layout } from '@oriweave/core'
+import { TopologyCanvas, colors, fonts } from '@oriweave/renderer'
+import type { PositionedGraph, Device, Connection } from '@oriweave/core'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import SAMPLE_YAML from '../sample.yaml?raw'
@@ -174,7 +174,7 @@ export const LandingPage: React.FC = () => {
                 transition: 'background 0.15s',
               }}
             >
-              $ STACKDOC NEW
+              $ ORIWEAVE NEW
             </button>
             <button
               onClick={() => navigate('/gallery')}

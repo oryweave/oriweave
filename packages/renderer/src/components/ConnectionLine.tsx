@@ -1,6 +1,6 @@
 import React from 'react'
 import { connectionColors, colors } from '../theme'
-import type { PositionedEdge } from '@homelab-stackdoc/core'
+import type { PositionedEdge } from '@oriweave/core'
 
 interface ConnectionLineProps {
   edge: PositionedEdge
