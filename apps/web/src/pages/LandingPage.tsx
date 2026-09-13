@@ -87,7 +87,9 @@ export const LandingPage: React.FC = () => {
         fontFamily: fonts.mono,
       }}
     >
-      <AppNav />
+      {/* No header CTA here — the hero's own "$ ORIWEAVE NEW" button already
+          covers it; showing both read as redundant. */}
+      <AppNav primaryAction={<></>} />
 
       {/* Hero */}
       <main
