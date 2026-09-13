@@ -36,7 +36,7 @@ export const MiniDots: React.FC<{ color: string }> = ({ color }) => (
           width="24"
           height="20"
           rx="2"
-          fill="rgba(12, 21, 39, 0.6)"
+          fill="rgba(22, 27, 34, 0.6)"
           stroke={color}
           strokeWidth="0.5"
         />
@@ -51,7 +51,7 @@ export const MiniDots: React.FC<{ color: string }> = ({ color }) => (
         width="20"
         height="14"
         rx="1.5"
-        fill="rgba(12, 21, 39, 0.6)"
+        fill="rgba(22, 27, 34, 0.6)"
         stroke="#00e676"
         strokeWidth="0.4"
       />

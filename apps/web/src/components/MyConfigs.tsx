@@ -5,15 +5,15 @@ import { FatalError } from './FatalError'
 import type { MyConfig } from '../lib/api.types'
 
 const colors = {
-  background: '#080f1e',
-  cardBackground: 'rgba(12, 21, 39, 0.6)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
+  background: '#0D1117',
+  cardBackground: 'rgba(22, 27, 34, 0.6)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
   red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 }
 
 const fonts = {
@@ -34,17 +34,17 @@ function visibilityToLEDTone(visibility: string): LEDTone {
 
 function visibilityColor(visibility: string): string {
   if (visibility === 'public') return '#00e676'
-  if (visibility === 'private') return '#ffab00'
-  if (visibility === 'unlisted') return '#78909c'
-  return '#78909c'
+  if (visibility === 'private') return '#FF9800'
+  if (visibility === 'unlisted') return '#8B949E'
+  return '#8B949E'
 }
 
 const ledStyle = (tone: LEDTone): React.CSSProperties => ({
   width: 6,
   height: 6,
   borderRadius: '50%',
-  background: tone === 'green' ? '#00e676' : '#ffab00',
-  boxShadow: tone === 'green' ? '0 0 6px rgba(0, 230, 118, 0.6)' : '0 0 6px rgba(255, 171, 0, 0.6)',
+  background: tone === 'green' ? '#00e676' : '#FF9800',
+  boxShadow: tone === 'green' ? '0 0 6px rgba(0, 230, 118, 0.6)' : '0 0 6px rgba(255, 152, 0, 0.6)',
   flexShrink: 0,
 })
 
@@ -218,7 +218,7 @@ const SubHeader: React.FC<{ kickerText: string; onNew: () => void }> = ({ kicker
           alignItems: 'center',
           gap: 5,
           padding: '5px 12px',
-          background: hovered ? 'rgba(0, 229, 255, 0.1)' : 'transparent',
+          background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'transparent',
           border: `1px solid ${colors.primary}`,
           borderRadius: 5,
           color: colors.primary,
@@ -334,7 +334,7 @@ const ConfigCard: React.FC<{
                   key={t.tag}
                   style={{
                     padding: '2px 8px',
-                    background: 'rgba(0, 229, 255, 0.06)',
+                    background: 'rgba(38, 198, 218, 0.06)',
                     border: `1px solid ${colors.border}`,
                     borderRadius: 10,
                     color: colors.textSecondary,

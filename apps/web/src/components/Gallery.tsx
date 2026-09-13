@@ -6,15 +6,15 @@ import { MiniDots } from './MiniDots'
 import type { GallerySort, GallerySummary } from '../lib/api.types'
 
 const colors = {
-  background: '#080f1e',
-  cardBackground: 'rgba(12, 21, 39, 0.6)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
+  background: '#0D1117',
+  cardBackground: 'rgba(22, 27, 34, 0.6)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
   red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 }
 
 const fonts = {
@@ -36,9 +36,9 @@ function formatDate(iso: string): string {
 }
 
 const GALLERY_COLOURS = [
-  '#00e5ff', // cyan
+  '#26C6DA', // cyan
   '#00e676', // green
-  '#ffab00', // amber
+  '#FF9800', // amber
   '#d500f9', // magenta
   '#ff5252', // coral
   '#ffd600', // yellow
@@ -335,7 +335,7 @@ const GalleryCard: React.FC<{
         style={{
           position: 'relative',
           height: 110,
-          background: '#080f1e',
+          background: '#0D1117',
           borderBottom: `1px solid ${colors.border}`,
           flexShrink: 0,
         }}
@@ -386,7 +386,7 @@ const GalleryCard: React.FC<{
                   }}
                   style={{
                     padding: '2px 8px',
-                    background: isActive ? `${colors.primary}20` : 'rgba(0, 229, 255, 0.06)',
+                    background: isActive ? `${colors.primary}20` : 'rgba(38, 198, 218, 0.06)',
                     border: `1px solid ${isActive ? colors.primary : colors.border}`,
                     borderRadius: 10,
                     color: isActive ? colors.primary : colors.textSecondary,
@@ -435,7 +435,7 @@ const CounterChip: React.FC<{
       alignItems: 'center',
       gap: 3,
       padding: '2px 6px',
-      background: 'rgba(8, 15, 30, 0.75)',
+      background: 'rgba(13, 17, 23, 0.75)',
       border: `1px solid ${colors.border}`,
       borderRadius: 3,
       fontSize: 9,
@@ -463,7 +463,7 @@ const AuthorAvatar: React.FC<{ username: string }> = ({ username }) => (
       width: 18,
       height: 18,
       borderRadius: '50%',
-      background: 'rgba(0, 229, 255, 0.08)',
+      background: 'rgba(38, 198, 218, 0.08)',
       border: `1px solid ${colors.border}`,
       display: 'flex',
       alignItems: 'center',

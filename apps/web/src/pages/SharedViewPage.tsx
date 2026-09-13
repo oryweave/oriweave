@@ -9,16 +9,16 @@ import { useAuth } from '../context/AuthContext'
 import type { SharedConfig } from '../lib/api.types'
 
 const colors = {
-  background: '#080f1e',
-  backgroundSubtle: '#0c1527',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
+  background: '#0D1117',
+  backgroundSubtle: '#161B22',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
   green: '#00e676',
   red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 }
 
 const fonts = {
@@ -37,7 +37,7 @@ const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         alignItems: 'center',
         gap: 5,
         padding: '5px 12px',
-        background: hovered ? 'rgba(0, 229, 255, 0.1)' : 'transparent',
+        background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'transparent',
         border: `1px solid ${colors.primary}`,
         borderRadius: 5,
         color: colors.primary,

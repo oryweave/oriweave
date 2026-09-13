@@ -13,11 +13,11 @@ interface YamlEditorProps {
 }
 
 const colors = {
-  border: 'rgba(0, 229, 255, 0.12)',
+  border: 'rgba(38, 198, 218, 0.12)',
   red: '#ff1744',
-  amber: '#ffab00',
+  amber: '#FF9800',
   green: '#00e676',
-  textSecondary: '#78909c',
+  textSecondary: '#8B949E',
 }
 
 export const YamlEditor: React.FC<YamlEditorProps> = ({

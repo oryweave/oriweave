@@ -7,15 +7,15 @@ import { useAuth } from '../context/AuthContext'
 import type { TemplateCategory, TemplateSummary } from '../lib/api.types'
 
 const colors = {
-  background: '#080f1e',
-  cardBackground: 'rgba(12, 21, 39, 0.6)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
+  background: '#0D1117',
+  cardBackground: 'rgba(22, 27, 34, 0.6)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
   red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 }
 
 const fonts = {
@@ -23,14 +23,14 @@ const fonts = {
 }
 
 const categoryColor: Record<TemplateCategory | 'uncategorised', string> = {
-  networking: '#00e5ff',
+  networking: '#26C6DA',
   media: '#d500f9',
-  virtualization: '#ffab00',
+  virtualization: '#FF9800',
   storage: '#00e676',
   monitoring: '#ffd600',
   'home-automation': '#ff5252',
-  general: '#78909c',
-  uncategorised: '#78909c',
+  general: '#8B949E',
+  uncategorised: '#8B949E',
 }
 
 interface CategoryOption {
@@ -291,7 +291,7 @@ const TemplateCard: React.FC<{
                 key={tag}
                 style={{
                   padding: '1px 7px',
-                  background: 'rgba(0, 229, 255, 0.06)',
+                  background: 'rgba(38, 198, 218, 0.06)',
                   border: `1px solid ${colors.border}`,
                   borderRadius: 10,
                   color: colors.textSecondary,

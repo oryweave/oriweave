@@ -437,8 +437,8 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
 
   const legend = [
     { label: 'ETHERNET', color: '#00e676', dash: '' },
-    { label: 'WI-FI', color: '#00e5ff', dash: '2 4' },
-    { label: 'VPN', color: '#ffab00', dash: '6 4' },
+    { label: 'WI-FI', color: colors.primary, dash: '2 4' },
+    { label: 'VPN', color: colors.amber, dash: '6 4' },
   ]
 
   return (

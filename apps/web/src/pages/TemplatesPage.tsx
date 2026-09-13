@@ -3,7 +3,7 @@ import { AppNav } from '../components/AppNav'
 import { Templates } from '../components/Templates'
 
 const colors = {
-  background: '#080f1e',
+  background: '#0D1117',
 }
 
 const fonts = {
