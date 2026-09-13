@@ -46,7 +46,7 @@ const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         fontSize: 10,
         fontWeight: 700,
         letterSpacing: '0.06em',
-        transition: 'background 0.15s',
+        transition: 'background 0.12s',
       }}
     >
       EDIT
@@ -445,7 +445,7 @@ const ActionPill: React.FC<{
         fontFamily: fonts.mono,
         fontSize: 10,
         fontWeight: 600,
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >

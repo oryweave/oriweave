@@ -20,7 +20,7 @@ const buttonStyle: React.CSSProperties = {
   borderRadius: 6,
   color: colors.textSecondary,
   cursor: 'pointer',
-  transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+  transition: 'background 0.12s, color 0.12s, border-color 0.12s',
   fontFamily: fonts.mono,
   fontSize: 14,
   padding: 0,

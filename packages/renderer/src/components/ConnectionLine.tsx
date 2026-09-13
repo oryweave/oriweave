@@ -46,7 +46,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({ edge, highlighte
         strokeOpacity={highlighted ? 0.15 : dimmed ? 0.02 : 0.06}
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ transition: 'stroke-opacity 0.2s, stroke-width 0.2s' }}
+        style={{ transition: 'stroke-opacity 0.18s, stroke-width 0.18s' }}
       />
 
       {/* Base line — static, subtle */}
@@ -59,7 +59,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({ edge, highlighte
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={isVpn ? '6 4' : isWifi ? '2 4' : 'none'}
-        style={{ transition: 'stroke-opacity 0.2s, stroke-width 0.2s' }}
+        style={{ transition: 'stroke-opacity 0.18s, stroke-width 0.18s' }}
       />
 
       {/* Animated flow layer — marching dots */}
@@ -72,7 +72,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({ edge, highlighte
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={`${particleDot} ${particleGap}`}
-        style={{ transition: 'stroke-opacity 0.2s, stroke-width 0.2s' }}
+        style={{ transition: 'stroke-opacity 0.18s, stroke-width 0.18s' }}
       >
         <animate
           attributeName="stroke-dashoffset"
@@ -90,7 +90,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({ edge, highlighte
         r={highlighted ? 3.5 : 2.5}
         fill={color}
         opacity={highlighted ? 0.8 : dimmed ? 0.15 : 0.4}
-        style={{ transition: 'opacity 0.2s, r 0.2s' }}
+        style={{ transition: 'opacity 0.18s, r 0.18s' }}
       />
       <circle
         cx={points[points.length - 1].x}
@@ -98,7 +98,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({ edge, highlighte
         r={highlighted ? 3.5 : 2.5}
         fill={color}
         opacity={highlighted ? 0.8 : dimmed ? 0.15 : 0.4}
-        style={{ transition: 'opacity 0.2s, r 0.2s' }}
+        style={{ transition: 'opacity 0.18s, r 0.18s' }}
       />
 
       {/* Speed / label */}

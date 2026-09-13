@@ -160,7 +160,7 @@ export const Minimap: React.FC<MinimapProps> = ({
         border: `1px solid ${colors.borderHover}`,
         borderRadius: 4,
         opacity,
-        transition: 'opacity 0.2s',
+        transition: 'opacity 0.18s',
         cursor: dragging ? 'grabbing' : 'crosshair',
         zIndex: 10,
         pointerEvents: 'auto',

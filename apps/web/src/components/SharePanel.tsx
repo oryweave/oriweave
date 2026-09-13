@@ -67,7 +67,7 @@ const ActionButton: React.FC<{
         fontFamily: fonts.mono,
         fontSize: 12,
         textAlign: 'left',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >
@@ -257,7 +257,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.04em',
-          transition: 'all 0.15s',
+          transition: 'all 0.12s',
         }}
       >
         <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">

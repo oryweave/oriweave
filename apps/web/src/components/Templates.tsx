@@ -201,7 +201,7 @@ const CategoryPill: React.FC<{
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.04em',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
       }}
     >
       {label}
@@ -231,7 +231,7 @@ const TemplateCard: React.FC<{
         borderRadius: 8,
         fontFamily: fonts.mono,
         overflow: 'hidden',
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.12s',
       }}
     >
       <div
@@ -353,7 +353,7 @@ const CardButton: React.FC<{
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.04em',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >

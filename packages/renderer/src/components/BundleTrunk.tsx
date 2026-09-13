@@ -81,7 +81,7 @@ export const BundleTrunk: React.FC<BundleTrunkProps> = ({
     : undefined
 
   return (
-    <g style={{ opacity: trunkOpacity, transition: 'opacity 0.2s' }}>
+    <g style={{ opacity: trunkOpacity, transition: 'opacity 0.18s' }}>
       {/* Trunk glow */}
       <path
         d={trunkPath}
