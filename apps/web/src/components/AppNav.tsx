@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { colors, fonts } from '@oriweave/renderer'
+import { colors, fonts, Logomark } from '@oriweave/renderer'
 import { fetchGithubStats } from '../lib/api'
 import { UserMenu } from './UserMenu'
 
@@ -258,7 +258,7 @@ export const AppNav: React.FC<AppNavProps> = ({ title, kicker, primaryAction }) 
         letterSpacing: '0.04em',
       }}
     >
-      <span style={{ color: colors.primary }}>&gt;_</span>
+      <Logomark variant="full" live style={{ width: 28, height: 28, flexShrink: 0 }} />
       oriweave
     </a>
 

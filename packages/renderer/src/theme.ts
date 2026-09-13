@@ -14,6 +14,7 @@ export const colors = {
 
   // Secondary accents
   amber: '#FF9800',
+  amberLight: '#FFB74D',
   amberDim: 'rgba(255, 152, 0, 0.15)',
   amberBorder: 'rgba(255, 152, 0, 0.35)',
 
