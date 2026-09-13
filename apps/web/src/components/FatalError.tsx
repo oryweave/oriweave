@@ -24,7 +24,7 @@ export const FatalError: React.FC<FatalErrorProps> = ({ source, status, onRetry 
     >
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontWeight: 700 }}>[fatal]</span> could not reach{' '}
-        <span style={{ color: '#e0f7fa' }}>{source}</span>{' '}
+        <span style={{ color: '#E0E0E0' }}>{source}</span>{' '}
         <span style={{ color: 'rgba(255, 23, 68, 0.7)' }}>({status ?? 'network'})</span>
       </span>
       <button

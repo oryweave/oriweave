@@ -23,10 +23,10 @@ const toggleButtonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(12, 21, 39, 0.9)',
-  border: '1px solid rgba(0, 229, 255, 0.12)',
+  background: 'rgba(22, 27, 34, 0.9)',
+  border: '1px solid rgba(38, 198, 218, 0.12)',
   borderRadius: 6,
-  color: '#78909c',
+  color: '#8B949E',
   cursor: 'pointer',
   fontFamily: "'JetBrains Mono', monospace",
   fontSize: 14,
@@ -102,7 +102,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
     setIsExporting(true)
     try {
       const canvas = await html2canvas(captureRef.current, {
-        backgroundColor: '#080f1e',
+        backgroundColor: '#0D1117',
         scale: 2,
         useCORS: true,
         logging: false,
@@ -130,7 +130,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
         height: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        background: '#080f1e',
+        background: '#0D1117',
       }}
     >
       <AppNav
@@ -165,7 +165,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
                 width: 5,
                 cursor: 'col-resize',
                 flexShrink: 0,
-                background: resizing ? 'rgba(0,229,255,0.3)' : 'rgba(0,229,255,0.08)',
+                background: resizing ? 'rgba(38,198,218,0.3)' : 'rgba(38,198,218,0.08)',
                 transition: 'background 0.15s',
               }}
             />
@@ -178,12 +178,12 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
           <button
             onClick={() => setEditorVisible((v) => !v)}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.35)'
-              e.currentTarget.style.color = '#00e5ff'
+              e.currentTarget.style.borderColor = 'rgba(38, 198, 218, 0.35)'
+              e.currentTarget.style.color = '#26C6DA'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.12)'
-              e.currentTarget.style.color = '#78909c'
+              e.currentTarget.style.borderColor = 'rgba(38, 198, 218, 0.12)'
+              e.currentTarget.style.color = '#8B949E'
             }}
             title={editorVisible ? 'Hide editor' : 'Show editor'}
             style={toggleButtonStyle}

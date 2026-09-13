@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const colors = {
-  background: 'rgba(12, 21, 39, 0.95)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  background: 'rgba(22, 27, 34, 0.95)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
   red: '#ff1744',
 }
 
@@ -202,7 +202,7 @@ const MenuItem: React.FC<{ onClick: () => void; label: string; danger?: boolean 
         display: 'block',
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(0, 229, 255, 0.06)' : 'transparent',
+        background: hovered ? 'rgba(38, 198, 218, 0.06)' : 'transparent',
         border: 'none',
         borderRadius: 4,
         color: danger ? colors.red : hovered ? colors.primary : colors.textPrimary,

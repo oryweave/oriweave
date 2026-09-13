@@ -15,7 +15,7 @@ const buttonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(12, 21, 39, 0.9)',
+  background: 'rgba(22, 27, 34, 0.9)',
   border: `1px solid ${colors.border}`,
   borderRadius: 6,
   color: colors.textSecondary,
@@ -41,7 +41,7 @@ const Button: React.FC<{
       onMouseLeave={() => setHovered(false)}
       style={{
         ...buttonStyle,
-        background: hovered ? 'rgba(0, 229, 255, 0.1)' : 'rgba(12, 21, 39, 0.9)',
+        background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'rgba(22, 27, 34, 0.9)',
         borderColor: hovered ? colors.primaryBorder : colors.border,
         color: hovered ? colors.primary : colors.textSecondary,
       }}

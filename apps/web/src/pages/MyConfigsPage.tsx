@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import { AppNav } from '../components/AppNav'
 
 const colors = {
-  background: '#080f1e',
-  textMuted: '#455a64',
+  background: '#0D1117',
+  textMuted: '#6E7681',
 }
 
 const fonts = {

@@ -10,14 +10,14 @@ interface SharePanelProps {
 }
 
 const colors = {
-  background: 'rgba(12, 21, 39, 0.95)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
+  background: 'rgba(22, 27, 34, 0.95)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
+  primary: '#26C6DA',
   green: '#00e676',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 }
 
 const fonts = {
@@ -59,7 +59,7 @@ const ActionButton: React.FC<{
         gap: 10,
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(0, 229, 255, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+        background: hovered ? 'rgba(38, 198, 218, 0.06)' : 'rgba(255, 255, 255, 0.02)',
         border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
         borderRadius: 6,
         color: colors.textPrimary,
@@ -295,7 +295,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
               alignItems: 'center',
               gap: 8,
               padding: '8px 10px',
-              background: 'rgba(8, 15, 30, 0.6)',
+              background: 'rgba(13, 17, 23, 0.6)',
               border: `1px solid ${colors.border}`,
               borderRadius: 4,
               fontFamily: fonts.mono,

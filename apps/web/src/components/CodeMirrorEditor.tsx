@@ -34,34 +34,34 @@ const theme = EditorView.theme({
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    caretColor: '#00e5ff',
+    caretColor: '#26C6DA',
     padding: '16px 0',
   },
   '.cm-cursor': {
-    borderLeftColor: '#00e5ff',
+    borderLeftColor: '#26C6DA',
     borderLeftWidth: '2px',
   },
   '&.cm-focused .cm-cursor': {
-    borderLeftColor: '#00e5ff',
+    borderLeftColor: '#26C6DA',
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'rgba(0, 229, 255, 0.15) !important',
+    backgroundColor: 'rgba(38, 198, 218, 0.15) !important',
   },
   '&.cm-focused': {
     outline: 'none',
   },
   '.cm-gutters': {
     backgroundColor: 'transparent',
-    borderRight: '1px solid rgba(0, 229, 255, 0.08)',
+    borderRight: '1px solid rgba(38, 198, 218, 0.08)',
     color: '#546e7a',
     minWidth: '40px',
   },
   '.cm-activeLineGutter': {
-    backgroundColor: 'rgba(0, 229, 255, 0.06)',
+    backgroundColor: 'rgba(38, 198, 218, 0.06)',
     color: '#b0bec5',
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(0, 229, 255, 0.04)',
+    backgroundColor: 'rgba(38, 198, 218, 0.04)',
   },
   '.cm-foldGutter .cm-gutterElement': {
     color: '#546e7a',
@@ -80,45 +80,45 @@ const theme = EditorView.theme({
     background: 'transparent',
   },
   '.cm-scroller::-webkit-scrollbar-thumb': {
-    background: 'rgba(0, 229, 255, 0.15)',
+    background: 'rgba(38, 198, 218, 0.15)',
     borderRadius: '3px',
   },
 })
 
 const highlightColors = HighlightStyle.define([
-  { tag: tags.keyword, color: '#00e5ff', fontWeight: 'bold' },
+  { tag: tags.keyword, color: '#26C6DA', fontWeight: 'bold' },
   { tag: tags.atom, color: '#d500f9' },
   { tag: tags.bool, color: '#d500f9' },
-  { tag: tags.null, color: '#78909c' },
-  { tag: tags.number, color: '#ffab00' },
+  { tag: tags.null, color: '#8B949E' },
+  { tag: tags.number, color: '#FF9800' },
   { tag: tags.string, color: '#a5d6a7' },
   { tag: tags.comment, color: '#546e7a', fontStyle: 'italic' },
   { tag: tags.meta, color: '#90a4ae' },
   { tag: tags.propertyName, color: '#4dd0e1' },
   { tag: tags.definition(tags.propertyName), color: '#4dd0e1' },
-  { tag: tags.typeName, color: '#ffab00' },
-  { tag: tags.punctuation, color: '#78909c' },
-  { tag: tags.separator, color: '#78909c' },
-  { tag: tags.operator, color: '#78909c' },
-  { tag: tags.variableName, color: '#e0f7fa' },
-  { tag: tags.content, color: '#e0f7fa' },
+  { tag: tags.typeName, color: '#FF9800' },
+  { tag: tags.punctuation, color: '#8B949E' },
+  { tag: tags.separator, color: '#8B949E' },
+  { tag: tags.operator, color: '#8B949E' },
+  { tag: tags.variableName, color: '#E0E0E0' },
+  { tag: tags.content, color: '#E0E0E0' },
   { tag: tags.name, color: '#4dd0e1' },
 ])
 
 const syntaxColors = EditorView.theme({
   // YAML keys
-  '.cm-propertyName': { color: '#00e5ff' },
+  '.cm-propertyName': { color: '#26C6DA' },
   '.cm-string': { color: '#00e676' },
-  '.cm-number': { color: '#ffab00' },
+  '.cm-number': { color: '#FF9800' },
   '.cm-bool': { color: '#d500f9' },
-  '.cm-null': { color: '#78909c' },
-  '.cm-comment': { color: '#455a64' },
-  '.cm-meta': { color: '#78909c' },
+  '.cm-null': { color: '#8B949E' },
+  '.cm-comment': { color: '#6E7681' },
+  '.cm-meta': { color: '#8B949E' },
   '.cm-punctuation': { color: '#546e7a' },
   '.cm-atom': { color: '#d500f9' },
-  '.cm-keyword': { color: '#00e5ff' },
-  '.cm-typeName': { color: '#ffab00' },
-  '.cm-definition': { color: '#00e5ff' },
+  '.cm-keyword': { color: '#26C6DA' },
+  '.cm-typeName': { color: '#FF9800' },
+  '.cm-definition': { color: '#26C6DA' },
 })
 
 export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({

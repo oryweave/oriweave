@@ -98,7 +98,7 @@ export const DensityToolbar: React.FC<DensityToolbarProps> = ({
         alignItems: 'center',
         gap: 10,
         padding: '6px 10px',
-        background: 'rgba(12, 21, 39, 0.92)',
+        background: 'rgba(22, 27, 34, 0.92)',
         backdropFilter: 'blur(8px)',
         border: `1px solid ${colors.border}`,
         borderRadius: 6,

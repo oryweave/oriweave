@@ -11,7 +11,7 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span
     style={{
       padding: '4px 10px',
-      background: 'rgba(0, 229, 255, 0.06)',
+      background: 'rgba(38, 198, 218, 0.06)',
       border: `1px solid ${colors.border}`,
       borderRadius: 12,
       color: colors.textSecondary,
@@ -161,8 +161,8 @@ export const LandingPage: React.FC = () => {
               style={{
                 padding: '10px 16px',
                 background: primaryCtaHovered
-                  ? 'rgba(0, 229, 255, 0.18)'
-                  : 'rgba(0, 229, 255, 0.1)',
+                  ? 'rgba(38, 198, 218, 0.18)'
+                  : 'rgba(38, 198, 218, 0.1)',
                 border: `1px solid ${colors.primary}`,
                 borderRadius: 5,
                 color: colors.primary,
@@ -182,7 +182,7 @@ export const LandingPage: React.FC = () => {
               onMouseLeave={() => setGhostCtaHovered(false)}
               style={{
                 padding: '10px 16px',
-                background: ghostCtaHovered ? 'rgba(0, 229, 255, 0.06)' : 'transparent',
+                background: ghostCtaHovered ? 'rgba(38, 198, 218, 0.06)' : 'transparent',
                 border: `1px solid ${colors.border}`,
                 borderRadius: 5,
                 color: colors.textSecondary,
@@ -221,7 +221,7 @@ export const LandingPage: React.FC = () => {
             height: 540,
             border: `1px solid ${colors.border}`,
             borderRadius: 6,
-            background: 'rgba(8, 15, 30, 0.4)',
+            background: 'rgba(13, 17, 23, 0.4)',
             position: 'relative',
             overflow: 'hidden',
           }}

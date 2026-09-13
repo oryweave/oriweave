@@ -4,18 +4,18 @@
  */
 export const colors = {
   // Canvas
-  background: '#080f1e',
-  backgroundSubtle: '#0c1527',
+  background: '#0D1117',
+  backgroundSubtle: '#161B22',
 
   // Primary accent — cyan/teal
-  primary: '#00e5ff',
-  primaryDim: 'rgba(0, 229, 255, 0.15)',
-  primaryBorder: 'rgba(0, 229, 255, 0.35)',
+  primary: '#26C6DA',
+  primaryDim: 'rgba(38, 198, 218, 0.15)',
+  primaryBorder: 'rgba(38, 198, 218, 0.35)',
 
   // Secondary accents
-  amber: '#ffab00',
-  amberDim: 'rgba(255, 171, 0, 0.15)',
-  amberBorder: 'rgba(255, 171, 0, 0.35)',
+  amber: '#FF9800',
+  amberDim: 'rgba(255, 152, 0, 0.15)',
+  amberBorder: 'rgba(255, 152, 0, 0.35)',
 
   green: '#00e676',
   greenDim: 'rgba(0, 230, 118, 0.15)',
@@ -27,13 +27,13 @@ export const colors = {
   purpleDim: 'rgba(213, 0, 249, 0.15)',
 
   // Text
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
+  textPrimary: '#E0E0E0',
+  textSecondary: '#8B949E',
+  textMuted: '#6E7681',
 
   // Borders
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.4)',
+  border: 'rgba(38, 198, 218, 0.12)',
+  borderHover: 'rgba(38, 198, 218, 0.35)',
 } as const
 
 export const connectionColors: Record<string, string> = {
@@ -47,8 +47,8 @@ export const connectionColors: Record<string, string> = {
 }
 
 export const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace",
-  sans: "'IBM Plex Sans', 'Inter', system-ui, sans-serif",
+  mono: "'Fira Code', 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace",
+  sans: "'Fira Sans', 'IBM Plex Sans', 'Inter', system-ui, sans-serif",
 } as const
 
 export const spacing = {

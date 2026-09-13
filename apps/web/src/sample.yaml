@@ -25,15 +25,15 @@ groups:
   - id: network-edge
     name: Network Edge
     style: dashed
-    color: "#00e5ff"
+    color: "#26C6DA"
   - id: proxmox-cluster
     name: Proxmox Cluster
     style: solid
-    color: "#ffab00"
+    color: "#FF9800"
   - id: wireless
     name: Wireless Access
     style: dashed
-    color: "#00e5ff"
+    color: "#26C6DA"
   - id: client-devices
     name: Client Devices
     style: dashed
