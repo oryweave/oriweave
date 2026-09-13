@@ -1,15 +1,55 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { colors, fonts } from '@oriweave/renderer'
+import { colors, fonts, Logomark } from '@oriweave/renderer'
 import { fetchGithubStats } from '../lib/api'
 import { UserMenu } from './UserMenu'
 
 const DOCS_URL = import.meta.env.VITE_DOCS_URL || 'http://oriweave.localhost:3001'
 
+const APP_ENV = import.meta.env.VITE_APP_ENV
+
 interface AppNavProps {
   title?: string
   kicker?: string
   primaryAction?: React.ReactNode
+}
+
+// Environment-aware branding: a red corner ribbon over the logo for any
+// non-production environment, in place of the old `document.title`
+// suffix (title mutation removed from main.tsx). Never renders in prod.
+const EnvRibbon: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  if (!APP_ENV || APP_ENV === 'production') return <>{children}</>
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}
+      title={`Running in ${APP_ENV}`}
+    >
+      {children}
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: -5,
+          right: -11,
+          transform: 'rotate(24deg)',
+          background: colors.red,
+          color: colors.background,
+          fontFamily: fonts.mono,
+          fontSize: 6,
+          fontWeight: 700,
+          letterSpacing: '0.03em',
+          lineHeight: 1,
+          padding: '1px 3px',
+          borderRadius: 2,
+          whiteSpace: 'nowrap',
+          boxShadow: `0 0 4px ${colors.red}99`,
+        }}
+      >
+        {APP_ENV.slice(0, 4).toUpperCase()}
+      </span>
+    </div>
+  )
 }
 
 const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => {
@@ -258,7 +298,9 @@ export const AppNav: React.FC<AppNavProps> = ({ title, kicker, primaryAction }) 
         letterSpacing: '0.04em',
       }}
     >
-      <span style={{ color: colors.primary }}>&gt;_</span>
+      <EnvRibbon>
+        <Logomark variant="full" live style={{ width: 28, height: 28, flexShrink: 0 }} />
+      </EnvRibbon>
       oriweave
     </a>
 
