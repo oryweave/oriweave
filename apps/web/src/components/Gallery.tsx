@@ -324,7 +324,7 @@ const GalleryCard: React.FC<{
         border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
         borderRadius: 8,
         fontFamily: fonts.mono,
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.12s',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',

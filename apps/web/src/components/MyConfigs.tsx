@@ -227,7 +227,7 @@ const SubHeader: React.FC<{ kickerText: string; onNew: () => void }> = ({ kicker
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: '0.06em',
-          transition: 'background 0.15s',
+          transition: 'background 0.12s',
         }}
       >
         <span style={{ fontSize: 13, lineHeight: 1 }}>+</span>
@@ -256,7 +256,7 @@ const ConfigCard: React.FC<{
         border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
         borderRadius: 8,
         fontFamily: fonts.mono,
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.12s',
       }}
     >
       <div
@@ -389,7 +389,7 @@ const CardButton: React.FC<{
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.04em',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >

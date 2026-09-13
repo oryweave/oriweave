@@ -60,7 +60,7 @@ export const SupernodePuck: React.FC<SupernodePuckProps> = ({
         height: PUCK_SIZE + 18,
         cursor: 'pointer',
         opacity: outerOpacity,
-        transition: 'opacity 0.2s',
+        transition: 'opacity 0.18s',
         fontFamily: fonts.mono,
         userSelect: 'none',
       }}
@@ -81,7 +81,7 @@ export const SupernodePuck: React.FC<SupernodePuckProps> = ({
           justifyContent: 'center',
           position: 'relative',
           boxShadow: hovered ? `0 0 16px ${accentColor}33` : 'none',
-          transition: 'border-color 0.15s, box-shadow 0.15s',
+          transition: 'border-color 0.12s, box-shadow 0.12s',
         }}
       >
         <svg width={28} height={28} viewBox="0 0 24 24" fill={accentColor}>

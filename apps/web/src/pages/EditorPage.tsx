@@ -31,7 +31,7 @@ const toggleButtonStyle: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
   fontSize: 14,
   padding: 0,
-  transition: 'all 0.15s',
+  transition: 'all 0.12s',
 }
 
 export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug }) => {
@@ -166,7 +166,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
                 cursor: 'col-resize',
                 flexShrink: 0,
                 background: resizing ? 'rgba(38,198,218,0.3)' : 'rgba(38,198,218,0.08)',
-                transition: 'background 0.15s',
+                transition: 'background 0.12s',
               }}
             />
           </>

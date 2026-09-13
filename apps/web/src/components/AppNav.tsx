@@ -128,7 +128,7 @@ const DefaultNewDiagramButton: React.FC = () => {
         fontSize: 10,
         fontWeight: 700,
         letterSpacing: '0.06em',
-        transition: 'background 0.15s',
+        transition: 'background 0.12s',
       }}
     >
       NEW DIAGRAM

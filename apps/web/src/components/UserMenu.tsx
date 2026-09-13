@@ -70,7 +70,7 @@ export const UserMenu: React.FC = () => {
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.04em',
-          transition: 'all 0.15s',
+          transition: 'all 0.12s',
         }}
       >
         {githubIcon}
@@ -109,7 +109,7 @@ export const UserMenu: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'border-color 0.15s',
+          transition: 'border-color 0.12s',
         }}
       >
         {user.avatarUrl ? (
@@ -211,7 +211,7 @@ const MenuItem: React.FC<{ onClick: () => void; label: string; danger?: boolean 
         fontSize: 11,
         fontWeight: 600,
         textAlign: 'left',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
       }}
     >
       {label}

@@ -56,7 +56,7 @@ const RJ45Port: React.FC<{
         viewBox="0 0 18 16"
         style={{
           filter: hovered && active ? `drop-shadow(0 0 6px ${activeColor})` : 'none',
-          transition: 'filter 0.15s',
+          transition: 'filter 0.12s',
         }}
       >
         {/* RJ45 housing */}
@@ -209,7 +209,7 @@ const WifiIndicator: React.FC<{
         style={{
           opacity: active ? (hovered ? 1 : 0.8) : 0.3,
           filter: hovered && active ? `drop-shadow(0 0 6px ${colors.primary})` : 'none',
-          transition: 'filter 0.15s, opacity 0.15s',
+          transition: 'filter 0.12s, opacity 0.12s',
         }}
       >
         <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2a7.074 7.074 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z" />
@@ -221,7 +221,7 @@ const WifiIndicator: React.FC<{
             color: hovered ? colors.primary : `${colors.primary}bb`,
             fontWeight: 600,
             fontFamily: fonts.mono,
-            transition: 'color 0.15s',
+            transition: 'color 0.12s',
           }}
         >
           {clientCount}
