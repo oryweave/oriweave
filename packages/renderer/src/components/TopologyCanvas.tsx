@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
 import { ALL_LAYERS, isLayerVisible, type LayerCategory } from '../lib/layers'
 import {
   buildDeviceToCollapsedGroupMap,
@@ -8,13 +8,13 @@ import {
 } from '../lib/collapse'
 import { BundleTrunk } from './BundleTrunk'
 import { CanvasControls } from './CanvasControls'
-import { colors, fonts } from '../theme'
+import { colors, fonts, motion, radii } from '../theme'
 import { computeFocusedEdgeKeys, computeFocusedNodeIds } from '../lib/focus'
 import { ConnectionLine } from './ConnectionLine'
 import { DensityToolbar } from './DensityToolbar'
-import { DetailModal } from './DetailModal'
 import { DeviceCard } from './DeviceCard'
 import { GroupOutline } from './GroupOutline'
+import { Inspector } from './Inspector'
 import { Minimap } from './Minimap'
 import { resolveSupernodeIcon } from '../lib/supernode-icon'
 import { SupernodePuck } from './SupernodePuck'
@@ -25,6 +25,13 @@ interface TopologyCanvasProps {
   deviceMap: Map<string, Device>
   connections: Connection[]
   readOnly?: boolean
+  /**
+   * Rendered at the right edge of the title bar, after the filter box — matches the design's
+   * `App.jsx`, which puts the SHARE button in the canvas's own title row, not the global nav.
+   * A plain slot (not a specific component) so this package stays decoupled from apps/web, which
+   * owns whatever actually goes here (e.g. a share/export panel that calls the API).
+   */
+  headerActions?: React.ReactNode
 }
 
 interface Transform {
@@ -34,15 +41,31 @@ interface Transform {
 }
 
 const CLICK_VS_DRAG_PX = 4
-const MINIMAP_MIN_VIEWPORT_PX = 800
+
+// Bottom chrome row (zoom stack + legend + minimap) drops panels by priority as available
+// width shrinks — legend first, then minimap — mirroring the design's `showLegend`/
+// `showMinimap` thresholds. `avail` is measured after subtracting the Inspector's inset.
+const LEGEND_MIN_AVAIL_PX = 560
+const MINIMAP_MIN_AVAIL_PX = 260
+const CHROME_ROW_EDGE_PADDING_PX = 32
+
+const INSPECTOR_WIDTH_PX = 300
+const INSPECTOR_MAX_RATIO = 0.72
 
 const noop = () => {}
+
+function matchesFilter(device: Device, filter: string): boolean {
+  if (!filter.trim()) return true
+  const haystack = `${device.name} ${device.type} ${device.ip ?? ''}`.toLowerCase()
+  return haystack.includes(filter.trim().toLowerCase())
+}
 
 export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   graph,
   deviceMap,
   connections,
   readOnly = false,
+  headerActions,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 })
@@ -50,8 +73,8 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   const dragStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 })
   const dragMoved = useRef(false)
 
-  const [modalChild, setModalChild] = useState<Device | null>(null)
-  const [modalParent, setModalParent] = useState<Device | null>(null)
+  const [inspectedDevice, setInspectedDevice] = useState<Device | null>(null)
+  const [inspectedParent, setInspectedParent] = useState<Device | null>(null)
 
   const [highlightedEdge, setHighlightedEdge] = useState<{ from: string; to: string } | null>(null)
 
@@ -59,6 +82,7 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(() => new Set())
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null)
   const [focusDepth, setFocusDepth] = useState<0 | 1 | 2>(0)
+  const [filter, setFilter] = useState('')
   const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({
     width: 0,
     height: 0,
@@ -80,19 +104,19 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   }, [])
 
   const handleChildClick = useCallback((child: Device, parent: Device) => {
-    setModalChild(child)
-    setModalParent(parent)
+    setInspectedDevice(child)
+    setInspectedParent(parent)
   }, [])
 
   const handleOpenDetail = useCallback((device: Device, parent: Device | null) => {
     if (dragMoved.current) return
-    setModalChild(device)
-    setModalParent(parent)
+    setInspectedDevice(device)
+    setInspectedParent(parent)
   }, [])
 
-  const closeModal = useCallback(() => {
-    setModalChild(null)
-    setModalParent(null)
+  const closeInspector = useCallback(() => {
+    setInspectedDevice(null)
+    setInspectedParent(null)
   }, [])
 
   const handlePortHover = useCallback((deviceId: string, connectedTo: string | null) => {
@@ -165,8 +189,12 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     return () => window.removeEventListener('keydown', onKey)
   }, [focusedNodeId, readOnly])
 
-  // Auto-fit on graph change AND on container size change.
-  useEffect(() => {
+  // Auto-fit on graph change AND on container size change. `useLayoutEffect`, not `useEffect` —
+  // it must run before the browser paints, otherwise the first frame renders at the default
+  // {x:0, y:0, scale:1} transform (top-left corner, unscaled) and only snaps to the fitted,
+  // centered transform on the next frame once the ResizeObserver's callback fires. That one-frame
+  // flash is exactly what reads as "not centered on page load."
+  useLayoutEffect(() => {
     const el = containerRef.current
     if (!el) return
 
@@ -436,10 +464,18 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
   const focusActive = focusDepth > 0
 
   const legend = [
-    { label: 'ETHERNET', color: '#00e676', dash: '' },
-    { label: 'WI-FI', color: colors.primary, dash: '2 4' },
+    { label: 'ETHERNET', color: colors.green, dash: '' },
+    { label: 'WI-FI', color: colors.networkAccent, dash: '2 4' },
     { label: 'VPN', color: colors.amber, dash: '6 4' },
   ]
+
+  // Inspector inset (Phase D reuses `inspectedDevice` as the panel's open/closed state).
+  const inspectorInset = inspectedDevice
+    ? Math.min(INSPECTOR_WIDTH_PX, containerSize.width * INSPECTOR_MAX_RATIO)
+    : 0
+  const chromeRowAvail = containerSize.width - inspectorInset - CHROME_ROW_EDGE_PADDING_PX
+  const showLegend = !readOnly && chromeRowAvail >= LEGEND_MIN_AVAIL_PX
+  const showMinimap = !readOnly && chromeRowAvail >= MINIMAP_MIN_AVAIL_PX
 
   return (
     <div
@@ -474,7 +510,15 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
             background: 'rgba(8,15,30,0.88)',
             backdropFilter: 'blur(8px)',
             borderBottom: `1px solid ${colors.border}`,
-            zIndex: 10,
+            // `position: absolute` + a z-index makes this header its own stacking context — a
+            // child's z-index (like SharePanel's dropdown, z-index 30) only competes *within*
+            // that context, not against outside siblings. Against DensityToolbar/the bottom
+            // chrome row (both z-index 10, rendered later in the tree), the whole header used to
+            // lose the paint order at an equal 10, letting them cover the top of any dropdown
+            // that opens from inside it. Bumped to 11 — matches the Inspector panel's z-index, so
+            // Inspector (rendered after this header) still wins that specific tie by DOM order,
+            // preserving "Inspector overlaps the header" from its own z-index comment below.
+            zIndex: 11,
             fontFamily: fonts.mono,
           }}
         >
@@ -502,33 +546,37 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
             </span>
           ))}
           <div style={{ flex: 1 }} />
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-            {legend.map((l) => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <svg width={24} height={4}>
-                  <line
-                    x1={0}
-                    y1={2}
-                    x2={24}
-                    y2={2}
-                    stroke={l.color}
-                    strokeWidth={1.5}
-                    strokeDasharray={l.dash || 'none'}
-                  />
-                </svg>
-                <span
-                  style={{
-                    fontSize: 8,
-                    color: colors.textMuted,
-                    letterSpacing: '0.06em',
-                    fontWeight: 600,
-                  }}
-                >
-                  {l.label}
-                </span>
-              </div>
-            ))}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '3px 8px',
+              border: `1px solid ${colors.border}`,
+              borderRadius: radii.sm,
+              flexShrink: 0,
+            }}
+          >
+            <svg width={11} height={11} viewBox="0 0 24 24" fill={colors.textMuted}>
+              <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+            </svg>
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="filter devices"
+              style={{
+                background: 'transparent',
+                border: 0,
+                outline: 'none',
+                color: colors.textPrimary,
+                fontFamily: fonts.mono,
+                fontSize: 10,
+                width: 100,
+                minWidth: 0,
+              }}
+            />
           </div>
+          {headerActions}
         </div>
       )}
 
@@ -541,17 +589,6 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
           onSetZoom={handleSetZoomPercent}
           focusActive={focusActive}
           onFocus={handleFocusToggle}
-        />
-      )}
-
-      {/* Controls */}
-      {!readOnly && (
-        <CanvasControls
-          onZoomIn={onZoomIn}
-          onZoomOut={onZoomOut}
-          onFitToScreen={fitToScreen}
-          onResetView={resetView}
-          scale={transform.scale}
         />
       )}
 
@@ -648,7 +685,9 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
           if (deviceToCollapsed.has(node.device.id)) return null
           const original = deviceMap.get(node.device.id)
           const isFocused = node.device.id === focusedNodeId
-          const isDimmed = focusDepth > 0 && !focusedNodeIds.has(node.device.id)
+          const isFocusDimmed = focusDepth > 0 && !focusedNodeIds.has(node.device.id)
+          const isFilterDimmed = !matchesFilter(node.device, filter)
+          const isDimmed = isFocusDimmed || isFilterDimmed
           return (
             <DeviceCard
               key={node.device.id}
@@ -686,24 +725,93 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
         )}
       </div>
 
-      {/* Minimap — hidden below 800px viewport width. */}
-      {!readOnly && containerSize.width >= MINIMAP_MIN_VIEWPORT_PX && containerSize.width > 0 && (
-        <Minimap
-          graph={graph}
-          transform={transform}
-          setTransform={setTransform}
-          containerWidth={containerSize.width}
-          containerHeight={containerSize.height}
-        />
+      {/* Bottom chrome row: zoom stack + legend + minimap, laid out together instead of
+          each pinning its own corner, so they can drop by priority as width shrinks. */}
+      {!readOnly && containerSize.width > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 16,
+            right: 16 + inspectorInset,
+            bottom: 16,
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: 12,
+            zIndex: 10,
+            pointerEvents: 'none',
+            transition: `right ${motion.base}`,
+          }}
+        >
+          <CanvasControls
+            onZoomIn={onZoomIn}
+            onZoomOut={onZoomOut}
+            onFitToScreen={fitToScreen}
+            onResetView={resetView}
+            scale={transform.scale}
+          />
+          {showLegend && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 14,
+                alignItems: 'center',
+                padding: '5px 9px',
+                background: colors.backgroundSubtle,
+                border: `1px solid ${colors.border}`,
+                borderRadius: radii.md,
+                pointerEvents: 'auto',
+                flexShrink: 0,
+                fontFamily: fonts.mono,
+              }}
+            >
+              {legend.map((l) => (
+                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width={24} height={4}>
+                    <line
+                      x1={0}
+                      y1={2}
+                      x2={24}
+                      y2={2}
+                      stroke={l.color}
+                      strokeWidth={1.5}
+                      strokeDasharray={l.dash || 'none'}
+                    />
+                  </svg>
+                  <span
+                    style={{
+                      fontSize: 8,
+                      color: colors.textMuted,
+                      letterSpacing: '0.06em',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {l.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 8 }} />
+          {showMinimap && (
+            <Minimap
+              graph={graph}
+              transform={transform}
+              setTransform={setTransform}
+              containerWidth={containerSize.width}
+              containerHeight={containerSize.height}
+            />
+          )}
+        </div>
       )}
 
-      {/* Modal */}
-      {modalChild && (
-        <DetailModal
-          child={modalChild}
-          parent={modalParent}
+      {/* Inspector — right-side slide-in panel for the selected device. */}
+      {inspectedDevice && (
+        <Inspector
+          child={inspectedDevice}
+          parent={inspectedParent}
           connections={connections}
-          onClose={closeModal}
+          width={inspectorInset}
+          onClose={closeInspector}
         />
       )}
     </div>

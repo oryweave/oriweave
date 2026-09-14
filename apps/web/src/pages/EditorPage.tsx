@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas'
 import React, { useState, useMemo, useCallback, useRef } from 'react'
 import { parse, layout } from '@oriweave/core'
+import { colors, fonts, radii, motion } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import { PreviewPane } from '../components/PreviewPane'
@@ -24,19 +25,19 @@ const toggleButtonStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   background: 'rgba(22, 27, 34, 0.9)',
-  border: '1px solid rgba(38, 198, 218, 0.12)',
-  borderRadius: 6,
-  color: '#8B949E',
+  border: `1px solid ${colors.border}`,
+  borderRadius: radii.md,
+  color: colors.textSecondary,
   cursor: 'pointer',
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: fonts.mono,
   fontSize: 14,
   padding: 0,
-  transition: 'all 0.12s',
+  transition: `all ${motion.fast}`,
 }
 
 export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug }) => {
   const [yaml, setYaml] = useState(initialYaml || SAMPLE_YAML)
-  const [splitRatio, setSplitRatio] = useState(0.22)
+  const [splitRatio, setSplitRatio] = useState(0.27)
   const [resizing, setResizing] = useState(false)
   const [editorVisible, setEditorVisible] = useState(true)
 
@@ -102,7 +103,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
     setIsExporting(true)
     try {
       const canvas = await html2canvas(captureRef.current, {
-        backgroundColor: '#0D1117',
+        backgroundColor: colors.background,
         scale: 2,
         useCORS: true,
         logging: false,
@@ -120,8 +121,6 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
     }
   }, [graph])
 
-  const title = editingSlug ? `EDITING: ${editingSlug}` : 'EDITOR'
-
   return (
     <div
       style={{
@@ -130,20 +129,10 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
         height: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        background: '#0D1117',
+        background: colors.background,
       }}
     >
-      <AppNav
-        title={title}
-        primaryAction={
-          <SharePanel
-            yaml={yaml}
-            onExportPng={handleExportPng}
-            isExporting={isExporting}
-            editingSlug={editingSlug}
-          />
-        }
-      />
+      <AppNav />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Editor pane */}
@@ -165,8 +154,8 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
                 width: 5,
                 cursor: 'col-resize',
                 flexShrink: 0,
-                background: resizing ? 'rgba(38,198,218,0.3)' : 'rgba(38,198,218,0.08)',
-                transition: 'background 0.12s',
+                background: resizing ? colors.primaryBorder : 'rgba(255,152,0,0.08)',
+                transition: `background ${motion.fast}`,
               }}
             />
           </>
@@ -178,12 +167,12 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
           <button
             onClick={() => setEditorVisible((v) => !v)}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(38, 198, 218, 0.35)'
-              e.currentTarget.style.color = '#26C6DA'
+              e.currentTarget.style.borderColor = colors.borderHover
+              e.currentTarget.style.color = colors.primary
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(38, 198, 218, 0.12)'
-              e.currentTarget.style.color = '#8B949E'
+              e.currentTarget.style.borderColor = colors.border
+              e.currentTarget.style.color = colors.textSecondary
             }}
             title={editorVisible ? 'Hide editor' : 'Show editor'}
             style={toggleButtonStyle}
@@ -203,6 +192,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
             deviceMap={deviceMap}
             connections={connections}
             captureRef={captureRef}
+            headerActions={
+              <SharePanel
+                yaml={yaml}
+                onExportPng={handleExportPng}
+                isExporting={isExporting}
+                editingSlug={editingSlug}
+              />
+            }
           />
         </div>
       </div>

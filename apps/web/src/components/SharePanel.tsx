@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { colors as tokenColors, fonts } from '@oriweave/renderer'
 import { createConfig, updateConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -9,20 +10,8 @@ interface SharePanelProps {
   onExportPng: () => void
 }
 
-const colors = {
-  background: 'rgba(22, 27, 34, 0.95)',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  green: '#00e676',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
+// Local alpha-blended variant of the surface token, for this dropdown's background.
+const colors = { ...tokenColors, background: 'rgba(22, 27, 34, 0.95)' }
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 9,
@@ -59,7 +48,7 @@ const ActionButton: React.FC<{
         gap: 10,
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(38, 198, 218, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+        background: hovered ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 255, 255, 0.02)',
         border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
         borderRadius: 6,
         color: colors.textPrimary,
@@ -367,7 +356,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
                 border: '1px solid rgba(255,23,68,0.25)',
                 borderRadius: 5,
                 fontSize: 9,
-                color: '#ff1744',
+                color: colors.red,
                 fontFamily: fonts.mono,
               }}
             >

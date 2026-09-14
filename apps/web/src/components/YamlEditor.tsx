@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { ValidationError } from '@oriweave/core'
+import { colors, fonts } from '@oriweave/renderer'
 import { CodeMirrorEditor } from './CodeMirrorEditor'
 import { EditorStatusBar } from './EditorStatusBar'
 
@@ -10,14 +11,6 @@ interface YamlEditorProps {
   networkCount: number
   deviceCount: number
   connectionCount: number
-}
-
-const colors = {
-  border: 'rgba(38, 198, 218, 0.12)',
-  red: '#ff1744',
-  amber: '#FF9800',
-  green: '#00e676',
-  textSecondary: '#8B949E',
 }
 
 export const YamlEditor: React.FC<YamlEditorProps> = ({
@@ -38,8 +31,8 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: '#06090f',
-        fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+        background: colors.backgroundDeep,
+        fontFamily: fonts.mono,
       }}
     >
       {/* Toolbar */}

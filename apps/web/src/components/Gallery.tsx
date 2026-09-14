@@ -1,25 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { colors as tokenColors, fonts } from '@oriweave/renderer'
 import { ApiError, fetchGallery } from '../lib/api'
+import { CardThumbnail } from './CardThumbnail'
 import { FatalError } from './FatalError'
-import { MiniDots } from './MiniDots'
 import type { GallerySort, GallerySummary } from '../lib/api.types'
 
-const colors = {
-  background: '#0D1117',
-  cardBackground: 'rgba(22, 27, 34, 0.6)',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  red: '#ff1744',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
+// Local translucent variant of the card surface, for this page's card background.
+const colors = { ...tokenColors, cardBackground: 'rgba(22, 27, 34, 0.6)' }
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
@@ -35,11 +23,12 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+// The last two are deliberate one-off variety colors, not brand tokens.
 const GALLERY_COLOURS = [
-  '#26C6DA', // cyan
-  '#00e676', // green
-  '#FF9800', // amber
-  '#d500f9', // magenta
+  colors.primary,
+  colors.green,
+  colors.amber,
+  colors.purple,
   '#ff5252', // coral
   '#ffd600', // yellow
 ] as const
@@ -238,29 +227,16 @@ const FilterBar: React.FC<{
       }}
     />
 
-    <select
-      value={sort}
-      onChange={(e) => onSortChange(e.target.value as GallerySort)}
-      style={{
-        padding: '6px 10px',
-        background: colors.cardBackground,
-        border: `1px solid ${colors.border}`,
-        borderRadius: 6,
-        color: colors.textPrimary,
-        fontFamily: fonts.mono,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.04em',
-        cursor: 'pointer',
-        outline: 'none',
-      }}
-    >
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {SORT_OPTIONS.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
+        <SortPill
+          key={opt.value}
+          label={opt.label}
+          active={sort === opt.value}
+          onClick={() => onSortChange(opt.value)}
+        />
       ))}
-    </select>
+    </div>
 
     {tag && (
       <button
@@ -284,6 +260,36 @@ const FilterBar: React.FC<{
     )}
   </div>
 )
+
+const SortPill: React.FC<{
+  label: string
+  active: boolean
+  onClick: () => void
+}> = ({ label, active, onClick }) => {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '5px 10px',
+        background: active ? `${colors.primary}15` : 'transparent',
+        border: `1px solid ${active || hovered ? colors.borderHover : colors.border}`,
+        borderRadius: 5,
+        color: active ? colors.primary : colors.textSecondary,
+        cursor: 'pointer',
+        fontFamily: fonts.mono,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        transition: 'all 0.12s',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
 
 const ResultsMeta: React.FC<{ items: number; total: number; loading: boolean }> = ({
   items,
@@ -331,18 +337,9 @@ const GalleryCard: React.FC<{
         overflow: 'hidden',
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          height: 110,
-          background: '#0D1117',
-          borderBottom: `1px solid ${colors.border}`,
-          flexShrink: 0,
-        }}
-      >
-        <MiniDots color={slugToColour(item.slug)} />
+      <CardThumbnail accent={slugToColour(item.slug)} height={110} count={item.forkCount}>
         <CounterOverlay views={item.viewCount} forks={item.forkCount} />
-      </div>
+      </CardThumbnail>
 
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div
@@ -386,7 +383,7 @@ const GalleryCard: React.FC<{
                   }}
                   style={{
                     padding: '2px 8px',
-                    background: isActive ? `${colors.primary}20` : 'rgba(38, 198, 218, 0.06)',
+                    background: isActive ? `${colors.primary}20` : 'rgba(255, 152, 0, 0.06)',
                     border: `1px solid ${isActive ? colors.primary : colors.border}`,
                     borderRadius: 10,
                     color: isActive ? colors.primary : colors.textSecondary,
@@ -400,8 +397,49 @@ const GalleryCard: React.FC<{
             })}
           </div>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+          <ForkButton
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpen()
+            }}
+          />
+        </div>
       </div>
     </div>
+  )
+}
+
+const ForkButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '5px 10px',
+        background: hovered ? `${colors.primary}15` : 'transparent',
+        border: `1px solid ${hovered ? colors.primary : colors.border}`,
+        borderRadius: 5,
+        color: hovered ? colors.primary : colors.textSecondary,
+        cursor: 'pointer',
+        fontFamily: fonts.mono,
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        transition: 'all 0.12s',
+      }}
+    >
+      <svg width={11} height={11} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 3a3 3 0 00-1 5.83v6.34a3.001 3.001 0 102 0V15a2 2 0 002-2V9h3.17a3.001 3.001 0 100-2H9v6a4 4 0 01-4 4v.17A3.001 3.001 0 006 3z" />
+      </svg>
+      FORK
+    </button>
   )
 }
 
@@ -463,7 +501,7 @@ const AuthorAvatar: React.FC<{ username: string }> = ({ username }) => (
       width: 18,
       height: 18,
       borderRadius: '50%',
-      background: 'rgba(38, 198, 218, 0.08)',
+      background: 'rgba(255, 152, 0, 0.08)',
       border: `1px solid ${colors.border}`,
       display: 'flex',
       alignItems: 'center',

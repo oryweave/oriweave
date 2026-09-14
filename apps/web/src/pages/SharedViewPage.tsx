@@ -1,29 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { parse, layout } from '@oriweave/core'
-import { TopologyCanvas } from '@oriweave/renderer'
+import { TopologyCanvas, colors, fonts } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import { fetchConfig, forkConfig, deleteConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import type { SharedConfig } from '../lib/api.types'
-
-const colors = {
-  background: '#0D1117',
-  backgroundSubtle: '#161B22',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  green: '#00e676',
-  red: '#ff1744',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   const [hovered, setHovered] = useState(false)
@@ -37,7 +20,7 @@ const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         alignItems: 'center',
         gap: 5,
         padding: '5px 12px',
-        background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'transparent',
+        background: hovered ? 'rgba(255, 152, 0, 0.1)' : 'transparent',
         border: `1px solid ${colors.primary}`,
         borderRadius: 5,
         color: colors.primary,
