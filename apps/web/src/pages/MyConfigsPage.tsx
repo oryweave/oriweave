@@ -1,17 +1,9 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { colors, fonts } from '@oriweave/renderer'
 import { MyConfigs } from '../components/MyConfigs'
 import { useAuth } from '../context/AuthContext'
 import { AppNav } from '../components/AppNav'
-
-const colors = {
-  background: '#0D1117',
-  textMuted: '#6E7681',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 export const MyConfigsPage: React.FC = () => {
   const { isLoggedIn, isLoading } = useAuth()
@@ -50,13 +42,13 @@ export const MyConfigsPage: React.FC = () => {
         fontFamily: fonts.mono,
       }}
     >
-      <AppNav title="MY CONFIGS" />
+      <AppNav />
 
       <div
         style={{
-          maxWidth: 800,
+          maxWidth: 1200,
           margin: '0 auto',
-          padding: 24,
+          padding: '28px 24px 60px',
         }}
       >
         <MyConfigs />

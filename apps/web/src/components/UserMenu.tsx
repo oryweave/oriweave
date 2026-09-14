@@ -1,21 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { colors as tokenColors, fonts, radii, motion } from '@oriweave/renderer'
 import { useAuth } from '../context/AuthContext'
 
-const colors = {
-  background: 'rgba(22, 27, 34, 0.95)',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-  red: '#ff1744',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
+// Local alpha-blended variant of the surface token, for the backdrop-blur dropdown.
+const colors = { ...tokenColors, background: 'rgba(22, 27, 34, 0.95)' }
 
 const githubIcon = (
   <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -63,14 +52,14 @@ export const UserMenu: React.FC = () => {
           padding: '6px 12px',
           background: colors.background,
           border: `1px solid ${colors.border}`,
-          borderRadius: 6,
+          borderRadius: radii.md,
           color: colors.textSecondary,
           cursor: 'pointer',
           fontFamily: fonts.mono,
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.04em',
-          transition: 'all 0.12s',
+          transition: `all ${motion.fast}`,
         }}
       >
         {githubIcon}
@@ -94,42 +83,83 @@ export const UserMenu: React.FC = () => {
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
+      {/* Oriweave has no local accounts — the chip always reflects a connected git host.
+          Only GitHub OAuth is wired up today; the provider-dot badge is ready for the
+          others once they exist. */}
       <button
         onClick={() => setOpen((v) => !v)}
-        title={user.username}
+        title={`${user.username} · github`}
         style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          border: `1px solid ${open ? colors.borderHover : colors.border}`,
-          background: colors.background,
-          padding: 0,
-          cursor: 'pointer',
-          overflow: 'hidden',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'border-color 0.12s',
+          gap: 8,
+          padding: '3px 9px 3px 3px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: `1px solid ${open ? colors.borderHover : colors.border}`,
+          borderRadius: radii.pill,
+          cursor: 'pointer',
+          transition: `border-color ${motion.fast}`,
         }}
       >
-        {user.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt={user.username}
-            style={{ width: '100%', height: '100%', display: 'block' }}
-          />
-        ) : (
+        <span style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
           <span
             style={{
-              color: colors.textPrimary,
-              fontFamily: fonts.mono,
-              fontSize: 12,
-              fontWeight: 600,
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${tokenColors.primary}, ${tokenColors.primaryDeep})`,
             }}
           >
-            {initial}
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.username}
+                style={{ width: '100%', height: '100%', display: 'block' }}
+              />
+            ) : (
+              <span
+                style={{
+                  color: '#08121f',
+                  fontFamily: fonts.mono,
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                {initial}
+              </span>
+            )}
           </span>
-        )}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              right: -2,
+              bottom: -2,
+              width: 9,
+              height: 9,
+              borderRadius: '50%',
+              background: '#e6edf3',
+              border: `1.5px solid ${tokenColors.background}`,
+            }}
+          />
+        </span>
+        <span style={{ fontSize: 11, color: colors.textPrimary, fontFamily: fonts.mono }}>
+          {user.username}
+        </span>
+        <svg width={9} height={9} viewBox="0 0 16 16" style={{ marginLeft: -2 }} aria-hidden>
+          <path
+            d="M4 6l4 4 4-4"
+            stroke={colors.textMuted}
+            strokeWidth={1.6}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
 
       {open && (
@@ -142,7 +172,7 @@ export const UserMenu: React.FC = () => {
             padding: 8,
             background: colors.background,
             border: `1px solid ${colors.border}`,
-            borderRadius: 8,
+            borderRadius: radii.lg,
             backdropFilter: 'blur(12px)',
             zIndex: 30,
           }}
@@ -202,16 +232,16 @@ const MenuItem: React.FC<{ onClick: () => void; label: string; danger?: boolean 
         display: 'block',
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(38, 198, 218, 0.06)' : 'transparent',
+        background: hovered ? 'rgba(255, 152, 0, 0.06)' : 'transparent',
         border: 'none',
-        borderRadius: 4,
+        borderRadius: radii.sm,
         color: danger ? colors.red : hovered ? colors.primary : colors.textPrimary,
         cursor: 'pointer',
         fontFamily: fonts.mono,
         fontSize: 11,
         fontWeight: 600,
         textAlign: 'left',
-        transition: 'all 0.12s',
+        transition: `all ${motion.fast}`,
       }}
     >
       {label}

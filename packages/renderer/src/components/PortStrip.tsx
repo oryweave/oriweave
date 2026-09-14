@@ -67,7 +67,7 @@ const RJ45Port: React.FC<{
           height={11}
           rx={1.5}
           fill={active ? `${activeColor}20` : '#1a2332'}
-          stroke={active ? (hovered ? activeColor : `${activeColor}66`) : 'rgba(38,198,218,0.08)'}
+          stroke={active ? (hovered ? activeColor : `${activeColor}66`) : 'rgba(255,152,0,0.08)'}
           strokeWidth={hovered && active ? 1.5 : 1}
         />
         {/* Top clip/latch */}
@@ -78,7 +78,7 @@ const RJ45Port: React.FC<{
           height={4}
           rx={1}
           fill={active ? `${activeColor}30` : '#1a2332'}
-          stroke={active ? `${activeColor}44` : 'rgba(38,198,218,0.06)'}
+          stroke={active ? `${activeColor}44` : 'rgba(255,152,0,0.06)'}
           strokeWidth={0.75}
         />
         {/* Latch notch */}
@@ -100,7 +100,7 @@ const RJ45Port: React.FC<{
             width={1}
             height={4}
             rx={0.25}
-            fill={active ? `${activeColor}60` : 'rgba(38,198,218,0.06)'}
+            fill={active ? `${activeColor}60` : 'rgba(255,152,0,0.06)'}
           />
         ))}
         {/* Active LED indicator */}

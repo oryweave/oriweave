@@ -1,24 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { colors as tokenColors, fonts, radii, motion } from '@oriweave/renderer'
 import { ApiError, fetchMyConfigs, deleteConfig } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import { FatalError } from './FatalError'
 import type { MyConfig } from '../lib/api.types'
 
-const colors = {
-  background: '#0D1117',
-  cardBackground: 'rgba(22, 27, 34, 0.6)',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  red: '#ff1744',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-}
+// Local translucent variant of the card surface, for this page's card background.
+const colors = { ...tokenColors, cardBackground: 'rgba(22, 27, 34, 0.6)' }
 
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
+const GRID_COLUMNS = '24px 1fr 240px 130px 80px 70px 130px'
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
@@ -26,25 +17,32 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-type LEDTone = 'green' | 'amber'
+type LEDTone = 'green' | 'amber' | 'muted'
 
 function visibilityToLEDTone(visibility: string): LEDTone {
-  return visibility === 'public' ? 'green' : 'amber'
+  if (visibility === 'public') return 'green'
+  if (visibility === 'private') return 'amber'
+  return 'muted'
 }
 
 function visibilityColor(visibility: string): string {
-  if (visibility === 'public') return '#00e676'
-  if (visibility === 'private') return '#FF9800'
-  if (visibility === 'unlisted') return '#8B949E'
-  return '#8B949E'
+  if (visibility === 'public') return colors.green
+  if (visibility === 'private') return colors.amber
+  return colors.textSecondary
+}
+
+const ledColor: Record<LEDTone, string> = {
+  green: colors.green,
+  amber: colors.amber,
+  muted: colors.textMuted,
 }
 
 const ledStyle = (tone: LEDTone): React.CSSProperties => ({
   width: 6,
   height: 6,
   borderRadius: '50%',
-  background: tone === 'green' ? '#00e676' : '#FF9800',
-  boxShadow: tone === 'green' ? '0 0 6px rgba(0, 230, 118, 0.6)' : '0 0 6px rgba(255, 152, 0, 0.6)',
+  background: ledColor[tone],
+  boxShadow: tone === 'muted' ? 'none' : `0 0 6px ${ledColor[tone]}99`,
   flexShrink: 0,
 })
 
@@ -54,8 +52,22 @@ function buildKickerText(diagramCount: number, totalViews: number): string {
   return `// ${diagramCount} ${diagramWord}, ${totalViews} total ${viewWord}`
 }
 
+async function copyToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+  }
+}
+
 export const MyConfigs: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [configs, setConfigs] = useState<MyConfig[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fatal, setFatal] = useState<{ status: number | null } | null>(null)
@@ -152,7 +164,7 @@ export const MyConfigs: React.FC = () => {
             padding: '8px 16px',
             background: 'transparent',
             border: `1px solid ${colors.border}`,
-            borderRadius: 6,
+            borderRadius: radii.md,
             color: colors.primary,
             cursor: 'pointer',
             fontFamily: fonts.mono,
@@ -170,10 +182,34 @@ export const MyConfigs: React.FC = () => {
   const kickerText = buildKickerText(configs.length, totalViews)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <SubHeader kickerText={kickerText} onNew={() => navigate('/editor')} />
+    <div>
+      <SubHeader
+        kickerText={kickerText}
+        username={user?.username ?? null}
+        onNew={() => navigate('/editor')}
+      />
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: GRID_COLUMNS,
+          padding: '14px 8px',
+          borderBottom: `1px solid ${colors.border}`,
+          fontSize: 9,
+          color: colors.textMuted,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span />
+        <span>Name</span>
+        <span>Tags</span>
+        <span>Updated</span>
+        <span>Views</span>
+        <span>Vis</span>
+        <span style={{ textAlign: 'right' }}>Actions</span>
+      </div>
       {configs.map((config) => (
-        <ConfigCard
+        <ConfigRow
           key={config.slug}
           config={config}
           onView={() => navigate(`/s/${config.slug}`)}
@@ -186,29 +222,41 @@ export const MyConfigs: React.FC = () => {
   )
 }
 
-const SubHeader: React.FC<{ kickerText: string; onNew: () => void }> = ({ kickerText, onNew }) => {
+const SubHeader: React.FC<{ kickerText: string; username: string | null; onNew: () => void }> = ({
+  kickerText,
+  username,
+  onNew,
+}) => {
   const [hovered, setHovered] = useState(false)
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 12,
+        alignItems: 'baseline',
+        gap: 14,
         paddingBottom: 16,
         marginBottom: 4,
       }}
     >
-      <span
+      <h2
         style={{
-          color: colors.textMuted,
-          fontSize: 11,
-          fontWeight: 400,
-          letterSpacing: 0,
+          margin: 0,
+          fontFamily: fonts.sans,
+          fontSize: 18,
+          fontWeight: 700,
+          color: colors.textPrimary,
         }}
       >
-        {kickerText}
-      </span>
+        My Configs
+      </h2>
+      <span style={{ color: colors.textMuted, fontSize: 11 }}>{kickerText}</span>
       <div style={{ flex: 1 }} />
+      {username && (
+        <span style={{ fontSize: 10, color: colors.textMuted }}>
+          synced from{' '}
+          <b style={{ color: colors.textSecondary, fontWeight: 700 }}>github:{username}</b>
+        </span>
+      )}
       <button
         onClick={onNew}
         onMouseEnter={() => setHovered(true)}
@@ -217,17 +265,17 @@ const SubHeader: React.FC<{ kickerText: string; onNew: () => void }> = ({ kicker
           display: 'flex',
           alignItems: 'center',
           gap: 5,
-          padding: '5px 12px',
-          background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'transparent',
-          border: `1px solid ${colors.primary}`,
-          borderRadius: 5,
+          padding: '4px 10px',
+          background: hovered ? 'rgba(255, 152, 0, 0.18)' : colors.primaryDim,
+          border: `1px solid ${colors.primaryBorder}`,
+          borderRadius: radii.sm,
           color: colors.primary,
           cursor: 'pointer',
           fontFamily: fonts.mono,
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: '0.06em',
-          transition: 'background 0.12s',
+          transition: `background ${motion.fast}`,
         }}
       >
         <span style={{ fontSize: 13, lineHeight: 1 }}>+</span>
@@ -237,163 +285,194 @@ const SubHeader: React.FC<{ kickerText: string; onNew: () => void }> = ({ kicker
   )
 }
 
-const ConfigCard: React.FC<{
+const tagPillStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '2px 6px',
+  background: 'rgba(139, 148, 158, 0.08)',
+  border: `1px solid ${colors.border}`,
+  borderRadius: radii.xs,
+  color: colors.textSecondary,
+  fontSize: 8,
+  fontWeight: 700,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  lineHeight: '14px',
+  whiteSpace: 'nowrap',
+}
+
+const ConfigRow: React.FC<{
   config: MyConfig
   onView: () => void
   onEdit: () => void
   onDelete: () => void
   deleting: boolean
 }> = ({ config, onView, onEdit, onDelete, deleting }) => {
-  const [hovered, setHovered] = useState(false)
+  const [rowHovered, setRowHovered] = useState(false)
+  const [copiedField, setCopiedField] = useState<'share' | 'copy' | null>(null)
+
+  const flashCopied = (field: 'share' | 'copy') => {
+    setCopiedField(field)
+    setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 2000)
+  }
+
+  const handleShare = async () => {
+    await copyToClipboard(`${window.location.origin}/s/${config.slug}`)
+    flashCopied('share')
+  }
+
+  const handleCopyYaml = async () => {
+    await copyToClipboard(config.yaml)
+    flashCopied('copy')
+  }
 
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setRowHovered(true)}
+      onMouseLeave={() => setRowHovered(false)}
       style={{
-        padding: 16,
-        background: colors.cardBackground,
-        border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
-        borderRadius: 8,
+        display: 'grid',
+        gridTemplateColumns: GRID_COLUMNS,
+        alignItems: 'center',
+        padding: '12px 8px',
+        borderBottom: `1px solid ${colors.border}`,
+        fontSize: 11,
         fontFamily: fonts.mono,
-        transition: 'border-color 0.12s',
+        background: rowHovered ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
+        transition: `background ${motion.fast}`,
       }}
     >
-      <div
+      <span
+        aria-label={`visibility ${config.visibility}`}
+        style={ledStyle(visibilityToLEDTone(config.visibility))}
+      />
+      <span
+        onClick={onView}
+        title="View"
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
+          color: colors.textPrimary,
+          fontWeight: 600,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          minWidth: 0,
+          cursor: 'pointer',
         }}
       >
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 4,
-            }}
-          >
-            <span
-              aria-label={`visibility ${config.visibility}`}
-              style={ledStyle(visibilityToLEDTone(config.visibility))}
-            />
-            <div
-              style={{
-                color: colors.textPrimary,
-                fontSize: 14,
-                fontWeight: 600,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                minWidth: 0,
-              }}
-            >
-              {config.title}
-            </div>
-          </div>
-          <div
-            style={{
-              color: colors.textMuted,
-              fontSize: 10,
-              display: 'flex',
-              gap: 12,
-              flexWrap: 'wrap',
-            }}
-          >
-            <span>/{config.slug}</span>
-            <span
-              style={{
-                color: visibilityColor(config.visibility),
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                fontSize: 9,
-              }}
-            >
-              {config.visibility}
-            </span>
-            <span>
-              {config.viewCount} view{config.viewCount !== 1 ? 's' : ''}
-            </span>
-            <span>updated {formatDate(config.updatedAt)}</span>
-          </div>
-          {config.tags.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 6,
-                marginTop: 8,
-              }}
-            >
-              {config.tags.map((t) => (
-                <span
-                  key={t.tag}
-                  style={{
-                    padding: '2px 8px',
-                    background: 'rgba(38, 198, 218, 0.06)',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 10,
-                    color: colors.textSecondary,
-                    fontSize: 9,
-                  }}
-                >
-                  {t.tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          <CardButton onClick={onView} label="VIEW" />
-          <CardButton onClick={onEdit} label="EDIT" primary />
-          <CardButton
-            onClick={onDelete}
-            label={deleting ? '...' : 'DELETE'}
-            danger
-            disabled={deleting}
-          />
-        </div>
-      </div>
+        {config.title}
+      </span>
+      <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        {config.tags.map((t) => (
+          <span key={t.tag} style={tagPillStyle}>
+            {t.tag}
+          </span>
+        ))}
+      </span>
+      <span style={{ color: colors.textSecondary, fontSize: 10 }}>
+        {formatDate(config.updatedAt)}
+      </span>
+      <span style={{ color: colors.textSecondary, fontSize: 10 }}>{config.viewCount}</span>
+      <span
+        style={{
+          fontSize: 8,
+          color: visibilityColor(config.visibility),
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+        }}
+      >
+        {config.visibility.toUpperCase()}
+      </span>
+      <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+        <RowIconButton icon={<EditIcon />} label="Edit" onClick={onEdit} />
+        <RowIconButton
+          icon={copiedField === 'share' ? <CheckIcon /> : <ShareIcon />}
+          label={copiedField === 'share' ? 'Copied!' : 'Copy share link'}
+          onClick={handleShare}
+          tone={copiedField === 'share' ? 'green' : 'default'}
+        />
+        <RowIconButton
+          icon={copiedField === 'copy' ? <CheckIcon /> : <CopyIcon />}
+          label={copiedField === 'copy' ? 'Copied!' : 'Copy YAML'}
+          onClick={handleCopyYaml}
+          tone={copiedField === 'copy' ? 'green' : 'default'}
+        />
+        <RowIconButton
+          icon={<TrashIcon />}
+          label={deleting ? 'Deleting…' : 'Delete'}
+          onClick={onDelete}
+          tone="danger"
+          disabled={deleting}
+        />
+      </span>
     </div>
   )
 }
 
-const CardButton: React.FC<{
-  onClick: () => void
+const RowIconButton: React.FC<{
+  icon: React.ReactNode
   label: string
-  primary?: boolean
-  danger?: boolean
+  onClick: () => void
+  tone?: 'default' | 'danger' | 'green'
   disabled?: boolean
-}> = ({ onClick, label, primary, danger, disabled }) => {
+}> = ({ icon, label, onClick, tone = 'default', disabled }) => {
   const [hovered, setHovered] = useState(false)
-  const baseColor = danger ? colors.red : primary ? colors.primary : colors.textSecondary
+  const toneColor =
+    tone === 'danger' ? colors.red : tone === 'green' ? colors.green : colors.textMuted
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      title={label}
+      aria-label={label}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        padding: '5px 10px',
-        background: hovered && !disabled ? `${baseColor}15` : 'transparent',
-        border: `1px solid ${hovered && !disabled ? baseColor : colors.border}`,
-        borderRadius: 5,
-        color: hovered && !disabled ? baseColor : colors.textSecondary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 22,
+        height: 22,
+        padding: 0,
+        background: 'transparent',
+        border: 'none',
+        borderRadius: radii.sm,
+        color: hovered && !disabled ? toneColor : tone === 'green' ? toneColor : colors.textMuted,
         cursor: disabled ? 'wait' : 'pointer',
-        fontFamily: fonts.mono,
-        fontSize: 10,
-        fontWeight: 600,
-        letterSpacing: '0.04em',
-        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
+        transition: `color ${motion.fast}`,
       }}
     >
-      {label}
+      {icon}
     </button>
   )
 }
+
+const EditIcon: React.FC = () => (
+  <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+  </svg>
+)
+
+const ShareIcon: React.FC = () => (
+  <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18 16.08a2.91 2.91 0 00-1.96.77L8.91 12.7a3.27 3.27 0 000-1.4l7.05-4.11A3 3 0 1015 5a3.27 3.27 0 00.09.7L8.04 9.81a3 3 0 100 4.38l7.12 4.16a2.82 2.82 0 00-.08.65 2.92 2.92 0 102.92-2.92z" />
+  </svg>
+)
+
+const CopyIcon: React.FC = () => (
+  <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M16 1H4a2 2 0 00-2 2v14h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z" />
+  </svg>
+)
+
+const TrashIcon: React.FC = () => (
+  <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+  </svg>
+)
+
+const CheckIcon: React.FC = () => (
+  <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+  </svg>
+)

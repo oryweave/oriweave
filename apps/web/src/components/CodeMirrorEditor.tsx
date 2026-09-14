@@ -19,6 +19,7 @@ import {
 } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { yaml } from '@codemirror/lang-yaml'
+import { colors, fonts } from '@oriweave/renderer'
 
 interface CodeMirrorEditorProps {
   value: string
@@ -30,38 +31,38 @@ const theme = EditorView.theme({
   '&': {
     height: '100%',
     fontSize: '13px',
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+    fontFamily: fonts.mono,
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    caretColor: '#26C6DA',
+    caretColor: colors.primary,
     padding: '16px 0',
   },
   '.cm-cursor': {
-    borderLeftColor: '#26C6DA',
+    borderLeftColor: colors.primary,
     borderLeftWidth: '2px',
   },
   '&.cm-focused .cm-cursor': {
-    borderLeftColor: '#26C6DA',
+    borderLeftColor: colors.primary,
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'rgba(38, 198, 218, 0.15) !important',
+    backgroundColor: `${colors.primaryDim} !important`,
   },
   '&.cm-focused': {
     outline: 'none',
   },
   '.cm-gutters': {
     backgroundColor: 'transparent',
-    borderRight: '1px solid rgba(38, 198, 218, 0.08)',
+    borderRight: '1px solid rgba(255, 152, 0, 0.08)',
     color: '#546e7a',
     minWidth: '40px',
   },
   '.cm-activeLineGutter': {
-    backgroundColor: 'rgba(38, 198, 218, 0.06)',
+    backgroundColor: 'rgba(255, 152, 0, 0.06)',
     color: '#b0bec5',
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(38, 198, 218, 0.04)',
+    backgroundColor: 'rgba(255, 152, 0, 0.04)',
   },
   '.cm-foldGutter .cm-gutterElement': {
     color: '#546e7a',
@@ -80,45 +81,47 @@ const theme = EditorView.theme({
     background: 'transparent',
   },
   '.cm-scroller::-webkit-scrollbar-thumb': {
-    background: 'rgba(38, 198, 218, 0.15)',
+    background: colors.primaryDim,
     borderRadius: '3px',
   },
 })
 
+// Syntax colors not backed by a brand token (e.g. tags.string, tags.comment) are
+// deliberate one-off differentiation for code highlighting, not UI drift.
 const highlightColors = HighlightStyle.define([
-  { tag: tags.keyword, color: '#26C6DA', fontWeight: 'bold' },
-  { tag: tags.atom, color: '#d500f9' },
-  { tag: tags.bool, color: '#d500f9' },
-  { tag: tags.null, color: '#8B949E' },
-  { tag: tags.number, color: '#FF9800' },
+  { tag: tags.keyword, color: colors.primary, fontWeight: 'bold' },
+  { tag: tags.atom, color: colors.purple },
+  { tag: tags.bool, color: colors.purple },
+  { tag: tags.null, color: colors.textSecondary },
+  { tag: tags.number, color: colors.amber },
   { tag: tags.string, color: '#a5d6a7' },
   { tag: tags.comment, color: '#546e7a', fontStyle: 'italic' },
   { tag: tags.meta, color: '#90a4ae' },
-  { tag: tags.propertyName, color: '#4dd0e1' },
-  { tag: tags.definition(tags.propertyName), color: '#4dd0e1' },
-  { tag: tags.typeName, color: '#FF9800' },
-  { tag: tags.punctuation, color: '#8B949E' },
-  { tag: tags.separator, color: '#8B949E' },
-  { tag: tags.operator, color: '#8B949E' },
-  { tag: tags.variableName, color: '#E0E0E0' },
-  { tag: tags.content, color: '#E0E0E0' },
-  { tag: tags.name, color: '#4dd0e1' },
+  { tag: tags.propertyName, color: colors.primaryLight },
+  { tag: tags.definition(tags.propertyName), color: colors.primaryLight },
+  { tag: tags.typeName, color: colors.amber },
+  { tag: tags.punctuation, color: colors.textSecondary },
+  { tag: tags.separator, color: colors.textSecondary },
+  { tag: tags.operator, color: colors.textSecondary },
+  { tag: tags.variableName, color: colors.textPrimary },
+  { tag: tags.content, color: colors.textPrimary },
+  { tag: tags.name, color: colors.primaryLight },
 ])
 
 const syntaxColors = EditorView.theme({
   // YAML keys
-  '.cm-propertyName': { color: '#26C6DA' },
-  '.cm-string': { color: '#00e676' },
-  '.cm-number': { color: '#FF9800' },
-  '.cm-bool': { color: '#d500f9' },
-  '.cm-null': { color: '#8B949E' },
-  '.cm-comment': { color: '#6E7681' },
-  '.cm-meta': { color: '#8B949E' },
+  '.cm-propertyName': { color: colors.primary },
+  '.cm-string': { color: colors.green },
+  '.cm-number': { color: colors.amber },
+  '.cm-bool': { color: colors.purple },
+  '.cm-null': { color: colors.textSecondary },
+  '.cm-comment': { color: colors.textMuted },
+  '.cm-meta': { color: colors.textSecondary },
   '.cm-punctuation': { color: '#546e7a' },
-  '.cm-atom': { color: '#d500f9' },
-  '.cm-keyword': { color: '#26C6DA' },
-  '.cm-typeName': { color: '#FF9800' },
-  '.cm-definition': { color: '#26C6DA' },
+  '.cm-atom': { color: colors.purple },
+  '.cm-keyword': { color: colors.primary },
+  '.cm-typeName': { color: colors.amber },
+  '.cm-definition': { color: colors.primary },
 })
 
 export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({

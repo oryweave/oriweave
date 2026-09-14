@@ -1,14 +1,8 @@
 import React from 'react'
+import { colors, fonts } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
+import { PageHero } from '../components/PageHero'
 import { Templates } from '../components/Templates'
-
-const colors = {
-  background: '#0D1117',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 export const TemplatesPage: React.FC = () => {
   return (
@@ -19,15 +13,23 @@ export const TemplatesPage: React.FC = () => {
         fontFamily: fonts.mono,
       }}
     >
-      <AppNav title="TEMPLATES" />
+      <AppNav />
 
       <div
         style={{
           maxWidth: 1200,
           margin: '0 auto',
-          padding: 24,
+          padding: '28px 24px 60px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 20,
         }}
       >
+        <PageHero
+          eyebrow="── TEMPLATES"
+          title="Start from a known-good topology."
+          subtitle="Every template is a YAML file you own after forking. Nothing is locked to the renderer."
+        />
         <Templates />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { colors, fonts, Logomark } from '@oriweave/renderer'
+import { colors, fonts, radii, motion, Logomark } from '@oriweave/renderer'
 import { fetchGithubStats } from '../lib/api'
 import { UserMenu } from './UserMenu'
 
@@ -14,41 +14,52 @@ interface AppNavProps {
   primaryAction?: React.ReactNode
 }
 
-// Environment-aware branding: a red corner ribbon over the logo for any
-// non-production environment, in place of the old `document.title`
-// suffix (title mutation removed from main.tsx). Never renders in prod.
-const EnvRibbon: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (!APP_ENV || APP_ENV === 'production') return <>{children}</>
+// Fixed per-environment tag colors — the design hardcodes these (Shell.jsx's own EnvRibbon
+// literally writes '#26C6DA' for dev, not var(--primary)), independent of whatever the UI
+// accent is. colors.networkAccent holds that same value under its own name; referencing it
+// here instead of a fresh literal keeps this in sync with the one other place it matters
+// (the canvas's own device/link colors) without re-coupling it to colors.primary.
+const ENV_RIBBON_COLOR: Record<string, string> = {
+  local: '#FB923C',
+  dev: colors.networkAccent,
+  stg: '#A855F7',
+}
 
+// Deploy-environment tag raised as an EXPONENT on the lockup — a small superscript notched onto
+// the mark's top-right, like `oriweaveᵉⁿᵛ`. Renders the bare lockup in production. Matches the
+// design's current `Shell.jsx` spec exactly (re-pulled — this superseded an earlier "plate behind
+// the logo" attempt that was guessed before checking the live source).
+const EnvRibbon: React.FC<{ env: string | undefined; children: React.ReactNode }> = ({
+  env,
+  children,
+}) => {
+  if (!env || env === 'prod' || env === 'production') return <>{children}</>
+  const c = ENV_RIBBON_COLOR[env] || colors.networkAccent
   return (
-    <div
-      style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}
-      title={`Running in ${APP_ENV}`}
+    <span
+      title={`environment: ${env}`}
+      style={{ display: 'inline-flex', alignItems: 'flex-start' }}
     >
       {children}
-      <span
-        aria-hidden="true"
+      <sup
         style={{
-          position: 'absolute',
-          top: -5,
-          right: -11,
-          transform: 'rotate(24deg)',
-          background: colors.red,
-          color: colors.background,
           fontFamily: fonts.mono,
-          fontSize: 6,
+          fontSize: 7.5,
           fontWeight: 700,
-          letterSpacing: '0.03em',
           lineHeight: 1,
-          padding: '1px 3px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#08121f',
+          background: c,
+          padding: '2px 5px',
           borderRadius: 2,
-          whiteSpace: 'nowrap',
-          boxShadow: `0 0 4px ${colors.red}99`,
+          marginLeft: 2,
+          top: '-0.2em',
         }}
       >
-        {APP_ENV.slice(0, 4).toUpperCase()}
-      </span>
-    </div>
+        {env}
+      </sup>
+    </span>
   )
 }
 
@@ -61,20 +72,22 @@ const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, chil
     <button
       onClick={() => navigate(to)}
       onMouseEnter={(e) => {
-        e.currentTarget.style.color = colors.primary
+        if (!active) e.currentTarget.style.color = colors.primary
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.color = active ? colors.primary : colors.textSecondary
       }}
       style={{
-        background: 'transparent',
-        border: 'none',
+        background: active ? colors.primaryDim : 'transparent',
+        border: `1px solid ${active ? colors.borderActive : 'transparent'}`,
         color: active ? colors.primary : colors.textSecondary,
         fontFamily: fonts.mono,
         fontSize: 11,
         letterSpacing: '0.04em',
         cursor: 'pointer',
-        padding: '4px 0',
+        padding: '5px 10px',
+        borderRadius: radii.md,
+        transition: `all ${motion.fast}`,
       }}
     >
       {children}
@@ -159,7 +172,7 @@ const DefaultNewDiagramButton: React.FC = () => {
         alignItems: 'center',
         gap: 5,
         padding: '5px 12px',
-        background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'transparent',
+        background: hovered ? 'rgba(255, 152, 0, 0.1)' : 'transparent',
         border: `1px solid ${colors.primary}`,
         borderRadius: 5,
         color: colors.primary,
@@ -171,6 +184,9 @@ const DefaultNewDiagramButton: React.FC = () => {
         transition: 'background 0.12s',
       }}
     >
+      <svg width={11} height={11} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 2v11h3v9l7-12h-4l3-8z" />
+      </svg>
       NEW DIAGRAM
     </button>
   )
@@ -284,39 +300,36 @@ export const AppNav: React.FC<AppNavProps> = ({ title, kicker, primaryAction }) 
       zIndex: 50,
     }}
   >
-    {/* Brand — anchor, not navigate(), so middle-click opens a new tab. */}
-    <a
-      href="/"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        textDecoration: 'none',
-        color: colors.textPrimary,
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: '0.04em',
-      }}
-    >
-      <EnvRibbon>
-        <Logomark variant="full" live style={{ width: 28, height: 28, flexShrink: 0 }} />
-      </EnvRibbon>
-      oriweave
-    </a>
+    {/* Brand — anchor, not navigate(), so middle-click opens a new tab. EnvRibbon wraps the
+        whole lockup (mark + wordmark), matching the design's `<EnvRibbon env="local"><Lockup
+        size={14} /></EnvRibbon>` — the env tag is a superscript on the lockup as a unit, not
+        chrome on the mark alone. */}
+    <EnvRibbon env={APP_ENV}>
+      <a
+        href="/"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          textDecoration: 'none',
+          color: colors.textPrimary,
+          fontSize: 13,
+          fontWeight: 700,
+          letterSpacing: '0.04em',
+          fontFamily: fonts.mono,
+        }}
+      >
+        {/* `reduced`, not `full` — the design's own Lockup switches variants below a size
+            threshold (`size < 20 ? 'reduced' : 'full'`) precisely because the full mark's 7 thin
+            strands blur together at header scale; Shell.jsx's own header uses
+            `<Lockup size={14}/>`, well under that threshold. `live` is dropped too — it only
+            animates the full variant's amber strand, a no-op on reduced. */}
+        <Logomark variant="reduced" style={{ width: 28, height: 28, flexShrink: 0 }} />
+        oriweave
+      </a>
+    </EnvRibbon>
 
-    <span
-      style={{
-        padding: '2px 6px',
-        border: `1px solid ${colors.green}40`,
-        borderRadius: 3,
-        color: colors.green,
-        fontSize: 8,
-        fontWeight: 700,
-        letterSpacing: '0.1em',
-      }}
-    >
-      LIVE
-    </span>
+    <span style={{ fontSize: 10, color: colors.textMuted }}>v{__APP_VERSION__}</span>
 
     {title && (
       <span

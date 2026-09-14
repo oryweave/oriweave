@@ -41,7 +41,7 @@ const Button: React.FC<{
       onMouseLeave={() => setHovered(false)}
       style={{
         ...buttonStyle,
-        background: hovered ? 'rgba(38, 198, 218, 0.1)' : 'rgba(22, 27, 34, 0.9)',
+        background: hovered ? 'rgba(255, 152, 0, 0.1)' : 'rgba(22, 27, 34, 0.9)',
         borderColor: hovered ? colors.primaryBorder : colors.border,
         color: hovered ? colors.primary : colors.textSecondary,
       }}
@@ -61,13 +61,10 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
   return (
     <div
       style={{
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
-        zIndex: 10,
+        flexShrink: 0,
         pointerEvents: 'auto',
       }}
     >
@@ -103,13 +100,16 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
 
       <Button onClick={onFitToScreen} title="Fit to screen">
         <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z" />
+          <path d="M9 21H3v-6h2v4h4v2zm12-12V3h-6v2h4v4h2zM5 9V5h4V3H3v6h2zm10 12v-2h4v-4h2v6h-6z" />
         </svg>
       </Button>
 
       <Button onClick={onResetView} title="Reset to 100%">
+        {/* The design's own `ui.reset` path is truncated (its second subpath runs to negative
+            x, off a 24-wide viewBox) — using the standard Material "refresh" glyph it's clearly
+            derived from instead of reproducing that defect. */}
         <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
         </svg>
       </Button>
     </div>

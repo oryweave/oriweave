@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, useParams, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
+import { colors, fonts } from '@oriweave/renderer'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { EditorPage } from './pages/EditorPage'
 import { fetchConfig } from './lib/api'
@@ -8,14 +9,6 @@ import { LandingPage } from './pages/LandingPage'
 import { MyConfigsPage } from './pages/MyConfigsPage'
 import { SharedView } from './pages/SharedViewPage'
 import { TemplatesPage } from './pages/TemplatesPage'
-
-const colors = {
-  background: '#0D1117',
-  textMuted: '#6E7681',
-}
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 const FullScreenMessage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div

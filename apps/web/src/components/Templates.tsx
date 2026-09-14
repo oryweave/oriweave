@@ -1,36 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { colors as tokenColors, fonts } from '@oriweave/renderer'
 import { ApiError, fetchTemplate, fetchTemplates, createTemplateFromSlug } from '../lib/api'
+import { CardThumbnail } from './CardThumbnail'
 import { FatalError } from './FatalError'
-import { MiniDots } from './MiniDots'
 import { useAuth } from '../context/AuthContext'
 import type { TemplateCategory, TemplateSummary } from '../lib/api.types'
 
-const colors = {
-  background: '#0D1117',
-  cardBackground: 'rgba(22, 27, 34, 0.6)',
-  border: 'rgba(38, 198, 218, 0.12)',
-  borderHover: 'rgba(38, 198, 218, 0.35)',
-  primary: '#26C6DA',
-  red: '#ff1744',
-  textPrimary: '#E0E0E0',
-  textSecondary: '#8B949E',
-  textMuted: '#6E7681',
-}
+// Local translucent variant of the card surface, for this page's card background.
+const colors = { ...tokenColors, cardBackground: 'rgba(22, 27, 34, 0.6)' }
 
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
-
+// 'monitoring'/'home-automation' are deliberate one-off variety colors, not brand tokens.
 const categoryColor: Record<TemplateCategory | 'uncategorised', string> = {
-  networking: '#26C6DA',
-  media: '#d500f9',
-  virtualization: '#FF9800',
-  storage: '#00e676',
+  networking: colors.primary,
+  media: colors.purple,
+  virtualization: colors.amber,
+  storage: colors.green,
   monitoring: '#ffd600',
   'home-automation': '#ff5252',
-  general: '#8B949E',
-  uncategorised: '#8B949E',
+  general: colors.textSecondary,
+  uncategorised: colors.textSecondary,
 }
 
 interface CategoryOption {
@@ -234,16 +223,7 @@ const TemplateCard: React.FC<{
         transition: 'border-color 0.12s',
       }}
     >
-      <div
-        style={{
-          height: 120,
-          flexShrink: 0,
-          background: colors.background,
-          borderBottom: `1px solid ${colors.border}`,
-        }}
-      >
-        <MiniDots color={accent} />
-      </div>
+      <CardThumbnail accent={accent} height={120} />
 
       <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div
@@ -291,7 +271,7 @@ const TemplateCard: React.FC<{
                 key={tag}
                 style={{
                   padding: '1px 7px',
-                  background: 'rgba(38, 198, 218, 0.06)',
+                  background: 'rgba(255, 152, 0, 0.06)',
                   border: `1px solid ${colors.border}`,
                   borderRadius: 10,
                   color: colors.textSecondary,
