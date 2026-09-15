@@ -223,7 +223,16 @@ export class ConfigsService {
       await this.tagRepo.save(tagEntities)
     }
 
-    await this.configRepo.save(config)
+    // A plain update, not save(config) — config.tags is the stale eager-loaded
+    // relation from findBySlug() above and would make TypeORM's cascade try to
+    // reconcile it against the rows the tagRepo calls above already replaced,
+    // nulling out config_tags.config_id (a NOT NULL primary key column).
+    await this.configRepo.update(config.id, {
+      yaml: config.yaml,
+      title: config.title,
+      contentHash: config.contentHash,
+      visibility: config.visibility,
+    })
 
     return this.configRepo.findOneOrFail({
       where: { id: config.id },
