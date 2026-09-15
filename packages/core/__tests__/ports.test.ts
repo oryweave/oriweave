@@ -5,7 +5,14 @@ import {
   buildDeviceWithLabelledPorts,
   buildDeviceWithAmbiguousLabel,
 } from './fixtures'
-import { assignPorts, enumeratePorts, getInterfaceGroup, resolvePortReference } from '../src/ports'
+import {
+  assignPorts,
+  enumeratePorts,
+  getInterfaceGroup,
+  resolvePortReference,
+  getEthernetRowCount,
+  needsSecondaryPortRow,
+} from '../src/ports'
 
 // ─── Enumeration ──────────────────────────────────────────────────
 
@@ -174,6 +181,24 @@ describe('assignPorts › label propagation', () => {
     )
 
     expect(assignments.get(device.id)![0].label).toBeUndefined()
+  })
+
+  it('gives two parallel links between the same pair distinct port indices', () => {
+    const sw1 = buildDevice({ id: 'sw1', interfaces: { ethernet: { count: 4 } } })
+    const sw2 = buildDevice({ id: 'sw2', interfaces: { ethernet: { count: 4 } } })
+
+    const assignments = assignPorts(
+      [sw1, sw2],
+      [buildConnection({ from: 'sw1', to: 'sw2' }), buildConnection({ from: 'sw1', to: 'sw2' })],
+    )
+
+    const sw1Side = assignments.get('sw1')!
+    expect(sw1Side).toHaveLength(2)
+    expect(sw1Side.map((p) => p.portIndex)).toEqual([0, 1])
+
+    const sw2Side = assignments.get('sw2')!
+    expect(sw2Side).toHaveLength(2)
+    expect(sw2Side.map((p) => p.portIndex)).toEqual([0, 1])
   })
 })
 
@@ -370,5 +395,48 @@ describe('assignPorts › pinned references', () => {
 
     const switchSide = assignments.get('switch')!
     expect(switchSide.every((a) => a.bundle === 'trunk-1')).toBe(true)
+  })
+})
+
+// ─── Ethernet row wrapping ─────────────────────────────────────────
+
+describe('getEthernetRowCount', () => {
+  it('needs zero rows when there are no ethernet ports', () => {
+    expect(getEthernetRowCount(0, 300)).toBe(0)
+  })
+
+  it('fits within a single row when the count fits the first row exactly', () => {
+    expect(getEthernetRowCount(12, 300)).toBe(1)
+  })
+
+  it('needs a second row once the count exceeds one row', () => {
+    expect(getEthernetRowCount(13, 300)).toBe(2)
+    expect(getEthernetRowCount(24, 300)).toBe(2)
+  })
+
+  it('caps at two rows for very high port counts (overflow renders as a badge instead)', () => {
+    expect(getEthernetRowCount(100, 300)).toBe(2)
+  })
+})
+
+describe('needsSecondaryPortRow', () => {
+  it('is false when there is no ethernet to contend with', () => {
+    expect(needsSecondaryPortRow(0, 4, false, 300)).toBe(false)
+  })
+
+  it('is false when there is nothing secondary to place', () => {
+    expect(needsSecondaryPortRow(24, 0, false, 300)).toBe(false)
+  })
+
+  it('is false when a small ethernet count leaves room for SFP beside it', () => {
+    expect(needsSecondaryPortRow(4, 4, false, 300)).toBe(false)
+  })
+
+  it('is true when a wide ethernet row leaves no room for SFP (the reported bug)', () => {
+    expect(needsSecondaryPortRow(24, 4, false, 300)).toBe(true)
+  })
+
+  it('is true when a wide ethernet row leaves no room for WiFi', () => {
+    expect(needsSecondaryPortRow(24, 0, true, 300)).toBe(true)
   })
 })

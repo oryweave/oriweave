@@ -4,6 +4,7 @@ import {
   buildDeviceToCollapsedGroupMap,
   countDevicesInGroup,
   rerouteEdgeForCollapse,
+  selectAutoCollapsedGroupIds,
   supernodeCentre,
 } from '../lib/collapse'
 import { BundleTrunk } from './BundleTrunk'
@@ -102,6 +103,23 @@ export const TopologyCanvas: React.FC<TopologyCanvasProps> = ({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // Auto-clustered groups (`Group.synthetic`, see core's layout.ts) start
+  // collapsed by default, unlike author-defined groups. Seeded once per
+  // synthetic id — tracked in a ref — so re-layout on later edits doesn't
+  // re-collapse a cluster the user has already expanded.
+  const seenAutoClusterIds = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const autoIds = selectAutoCollapsedGroupIds(graph.groups.map((g) => g.group))
+    const newIds = Array.from(autoIds).filter((id) => !seenAutoClusterIds.current.has(id))
+    if (newIds.length === 0) return
+    for (const id of newIds) seenAutoClusterIds.current.add(id)
+    setCollapsedGroupIds((prev) => {
+      const next = new Set(prev)
+      for (const id of newIds) next.add(id)
+      return next
+    })
+  }, [graph.groups])
 
   const handleChildClick = useCallback((child: Device, parent: Device) => {
     setInspectedDevice(child)

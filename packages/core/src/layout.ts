@@ -1,10 +1,18 @@
-import { assignPorts, getPortX, getInterfaceGroup } from './ports'
-import { buildGroupDepths, getDescendantGroupIds } from './groups'
+import {
+  assignPorts,
+  getPortX,
+  getInterfaceGroup,
+  getEthernetRowCount,
+  needsSecondaryPortRow,
+  ETH_ROW_HEIGHT,
+} from './ports'
+import { buildGroupDepths, getDescendantGroupIds, getRootGroupId } from './groups'
 import {
   DEFAULT_LAYOUT_OPTIONS,
   type HomelabDocument,
   type Device,
   type Connection,
+  type Group,
   type PositionedGraph,
   type PositionedNode,
   type PositionedEdge,
@@ -31,6 +39,13 @@ function layout(doc: HomelabDocument, userOptions?: LayoutOptions): PositionedGr
   // 2. Connection hierarchy for depth
   const { childrenMap, roots } = buildHierarchy(topLevel, doc.connections ?? [])
 
+  // 2b. Auto-cluster large, ungrouped fan-outs into synthetic collapsed
+  // groups. Purely a rendering artifact of this layout pass — mutates only
+  // the local `topLevel` working copies, never `doc.devices`/`doc.groups`
+  // (the document the user authored/exports is untouched).
+  const syntheticGroups = applyAutoClustering(topLevel, doc.devices, childrenMap, opts)
+  const allGroups = [...(doc.groups ?? []), ...syntheticGroups]
+
   // 3. BFS depth
   const depthMap = assignDepths(roots, childrenMap)
 
@@ -38,7 +53,7 @@ function layout(doc: HomelabDocument, userOptions?: LayoutOptions): PositionedGr
   const layers = buildLayers(topLevel, depthMap)
 
   // 5. Position nodes
-  const nodeMap = positionLayers(layers, opts)
+  const nodeMap = positionLayers(layers, allGroups, opts)
 
   // 6. Reroute connections targeting children
   const rerouteMap = buildRerouteMap(doc.devices)
@@ -55,8 +70,13 @@ function layout(doc: HomelabDocument, userOptions?: LayoutOptions): PositionedGr
   // safely default-lookup without null checks.
   const portEnumerations = buildPortEnumerations(doc.devices)
 
-  // 8. Group outlines
-  const groups = positionGroups(doc.groups ?? [], topLevel, nodeMap, opts)
+  // 8. Group outlines — resolveGroupOverlaps computes these (via
+  // positionGroups) and, if any two distinct top-level boxes still overlap
+  // (nested groups add their own extra padding on top of whatever
+  // positionLayers already reserved — see positionGroups' extraPad),
+  // nudges the underlying node layer(s) apart and recomputes from there,
+  // so the returned boxes are always consistent with final node positions.
+  const groups = resolveGroupOverlaps(allGroups, topLevel, nodeMap, opts)
 
   // 9. Normalize
   normalizePositions(nodeMap, groups, opts.groupPadding)
@@ -126,6 +146,62 @@ function buildHierarchy(
   return { parentMap, childrenMap, roots }
 }
 
+/**
+ * Synthesizes a collapsed group for each parent whose connection-topology
+ * fan-out (from `childrenMap`) has at least `autoClusterFanoutThreshold`
+ * ungrouped, leaf children — the common cause of clutter in large graphs
+ * (e.g. a switch or AP with dozens of directly-connected client devices).
+ *
+ * Only applies once the graph exceeds `autoClusterMinGraphSize`, so small
+ * graphs render identically to before this pass existed. A candidate child
+ * must: not already belong to an author-defined group, have no further
+ * connection-children of its own (a true topology leaf — clustering an
+ * intermediate switch would hide whatever hangs off it), and have no
+ * schema-nested `children` of its own for the same reason.
+ *
+ * Mutates the `.group` field on the given `topLevel` working copies (never
+ * `originalDevices`, i.e. never `doc.devices`) so the existing group
+ * positioning/collapse machinery picks the synthetic membership up for
+ * free. Returns the synthesized `Group` list to fold into `doc.groups` for
+ * this layout pass only.
+ */
+function applyAutoClustering(
+  topLevel: Device[],
+  originalDevices: Device[],
+  childrenMap: Map<string, string[]>,
+  opts: Required<LayoutOptions>,
+): Group[] {
+  if (topLevel.length < opts.autoClusterMinGraphSize) return []
+
+  const topLevelById = new Map(topLevel.map((d) => [d.id, d]))
+  const hasNestedChildren = new Set(
+    originalDevices.filter((d) => (d.children?.length ?? 0) > 0).map((d) => d.id),
+  )
+
+  const synthetic: Group[] = []
+
+  for (const [parentId, childIds] of childrenMap) {
+    const candidates = childIds.filter((id) => {
+      const device = topLevelById.get(id)
+      if (!device || device.group !== undefined) return false
+      if ((childrenMap.get(id)?.length ?? 0) > 0) return false
+      if (hasNestedChildren.has(id)) return false
+      return true
+    })
+
+    if (candidates.length < opts.autoClusterFanoutThreshold) continue
+
+    const groupId = `__autocluster__${parentId}`
+    synthetic.push({ id: groupId, name: `${candidates.length} devices`, synthetic: true })
+
+    for (const id of candidates) {
+      topLevelById.get(id)!.group = groupId
+    }
+  }
+
+  return synthetic
+}
+
 function assignDepths(roots: string[], childrenMap: Map<string, string[]>): Map<string, number> {
   const depthMap = new Map<string, number>()
   const queue: Array<{ id: string; depth: number }> = roots.map((id) => ({
@@ -159,17 +235,82 @@ function buildLayers(devices: Device[], depthMap: Map<string, number>): Device[]
 
 // ─── Node positioning ─────────────────────────────────────────────
 
+/**
+ * A device's card height starts from the fixed default but grows by one
+ * port row for each of:
+ *   - ethernet needing a second row to render (`getEthernetRowCount`), and
+ *   - SFP/WiFi not fitting beside ethernet on its row and dropping to a row
+ *     of their own (`needsSecondaryPortRow`).
+ * Both are shared with PortStrip.tsx so the two can't drift apart. Ethernet
+ * ports beyond what fits in two rows overflow into the renderer's "+N"
+ * badge rather than growing the card further, so this adds at most two
+ * extra rows total.
+ */
+function computeNodeHeight(device: Device, opts: Required<LayoutOptions>): number {
+  const ethCount = device.interfaces?.ethernet?.count ?? 0
+  const sfpCount = device.interfaces?.sfp?.count ?? 0
+  const hasWifi = !!device.interfaces?.wifi
+
+  const ethRows = getEthernetRowCount(ethCount, opts.nodeWidth)
+  let extraRows = Math.max(0, ethRows - 1)
+  if (needsSecondaryPortRow(ethCount, sfpCount, hasWifi, opts.nodeWidth)) {
+    extraRows += 1
+  }
+
+  return opts.nodeHeight + extraRows * ETH_ROW_HEIGHT
+}
+
+/**
+ * Root (outermost) group id for each grouped device in `layers`, computed
+ * once up front. Ungrouped devices are simply absent from the map.
+ */
+function buildRootGroupMap(layers: Device[][], groups: Group[]): Map<string, string> {
+  const rootGroupOf = new Map<string, string>()
+  for (const layer of layers) {
+    for (const device of layer) {
+      if (device.group) rootGroupOf.set(device.id, getRootGroupId(device.group, groups))
+    }
+  }
+  return rootGroupOf
+}
+
 function positionLayers(
   layers: Device[][],
+  groups: Group[],
   opts: Required<LayoutOptions>,
 ): Map<string, PositionedNode> {
   const nodeMap = new Map<string, PositionedNode>()
   const groupGap = opts.groupPadding * 2 + 16
+  const rootGroupOf = buildRootGroupMap(layers, groups)
 
   let currentY = 0
 
   for (let depth = 0; depth < layers.length; depth++) {
     const layer = layers[depth]
+
+    // A group's box is padded above and below its member nodes
+    // (`positionGroups`). The flat `verticalSpacing` gap between layers
+    // doesn't reserve room for that padding, so when this layer's devices
+    // belong to a completely different set of top-level groups than the
+    // previous layer's, their padded boxes can overlap even though the
+    // devices themselves don't — reserve extra room at exactly that
+    // boundary, the same way `groupGap` already does across the
+    // horizontal axis within a single layer.
+    if (depth > 0) {
+      const prevGroups = new Set(
+        layers[depth - 1].map((d) => rootGroupOf.get(d.id)).filter((g): g is string => !!g),
+      )
+      const currGroups = new Set(
+        layer.map((d) => rootGroupOf.get(d.id)).filter((g): g is string => !!g),
+      )
+      const crossesGroupBoundary =
+        prevGroups.size > 0 &&
+        currGroups.size > 0 &&
+        ![...prevGroups].some((g) => currGroups.has(g))
+      if (crossesGroupBoundary) {
+        currentY += opts.groupPadding
+      }
+    }
 
     const gaps: number[] = []
     for (let i = 1; i < layer.length; i++) {
@@ -183,15 +324,19 @@ function positionLayers(
     const layerWidth = layer.length * opts.nodeWidth + totalGaps
     let cursorX = -layerWidth / 2
 
+    let rowHeight = opts.nodeHeight
+
     for (let i = 0; i < layer.length; i++) {
       const device = layer[i]
+      const height = computeNodeHeight(device, opts)
+      rowHeight = Math.max(rowHeight, height)
 
       nodeMap.set(device.id, {
         device,
         x: cursorX,
         y: currentY,
         width: opts.nodeWidth,
-        height: opts.nodeHeight,
+        height,
         depth,
       })
 
@@ -201,7 +346,7 @@ function positionLayers(
       }
     }
 
-    currentY += opts.nodeHeight + opts.verticalSpacing
+    currentY += rowHeight + opts.verticalSpacing
   }
 
   return nodeMap
@@ -228,6 +373,21 @@ function rerouteConnections(
   rerouteMap: Map<string, string>,
   visibleIds: Set<string>,
 ): Connection[] {
+  // Dedup only applies to pairs that collide *because* rerouting collapsed
+  // distinct endpoints onto the same visible device (e.g. several children
+  // rerouted onto their shared parent). A pair that was already identical
+  // before rerouting — a genuine author-declared parallel link between two
+  // top-level devices — must survive as a separate edge.
+  const rerouted = new Set<string>()
+
+  for (const conn of connections) {
+    const from = rerouteMap.get(conn.from) ?? conn.from
+    const to = rerouteMap.get(conn.to) ?? conn.to
+    if (from !== conn.from || to !== conn.to) {
+      rerouted.add(`${from}→${to}`)
+    }
+  }
+
   const seen = new Set<string>()
   const result: Connection[] = []
 
@@ -239,8 +399,10 @@ function rerouteConnections(
     if (from === to) continue
 
     const key = `${from}→${to}`
-    if (seen.has(key)) continue
-    seen.add(key)
+    if (rerouted.has(key)) {
+      if (seen.has(key)) continue
+      seen.add(key)
+    }
 
     result.push({ ...conn, from, to })
   }
@@ -295,6 +457,13 @@ function routeEdges(
     byTarget.set(conn.to, tf)
   }
 
+  // When two or more connections share the same from→to pair (parallel
+  // links), `assignPorts` gave each one its own PortAssignment — but they're
+  // indistinguishable by `connectedTo` alone. Track how many connections for
+  // a given pair we've already resolved, so each one consumes its own entry
+  // instead of every one of them grabbing the first match.
+  const pairOccurrence = new Map<string, number>()
+
   for (const conn of connections) {
     const fromNode = nodeMap.get(conn.from)
     const toNode = nodeMap.get(conn.to)
@@ -306,8 +475,18 @@ function routeEdges(
     // Find port assignments for this connection
     const fromPorts = portAssignments.get(conn.from) ?? []
     const toPorts = portAssignments.get(conn.to) ?? []
-    const fromPort = fromPorts.find((p) => p.connectedTo === conn.to && p.interfaceType !== 'wifi')
-    const toPort = toPorts.find((p) => p.connectedTo === conn.from && p.interfaceType !== 'wifi')
+    const pairKey = `${conn.from}→${conn.to}`
+    const occurrence = pairOccurrence.get(pairKey) ?? 0
+    pairOccurrence.set(pairKey, occurrence + 1)
+
+    const fromMatches = fromPorts.filter(
+      (p) => p.connectedTo === conn.to && p.interfaceType !== 'wifi',
+    )
+    const toMatches = toPorts.filter(
+      (p) => p.connectedTo === conn.from && p.interfaceType !== 'wifi',
+    )
+    const fromPort = fromMatches[occurrence] ?? fromMatches[0]
+    const toPort = toMatches[occurrence] ?? toMatches[0]
 
     let exitX: number
     let entryX: number
@@ -552,6 +731,154 @@ function positionGroups(
   }
 
   return result
+}
+
+/** The BFS depths of a group's own member devices, across its full descendant subtree. */
+function subtreeMemberDepths(
+  groupId: string,
+  groups: Group[],
+  topLevel: Device[],
+  nodeMap: Map<string, PositionedNode>,
+): number[] {
+  const subtree = new Set([groupId, ...getDescendantGroupIds(groupId, groups)])
+  return topLevel
+    .filter((d) => d.group !== undefined && subtree.has(d.group))
+    .map((d) => nodeMap.get(d.id)?.depth)
+    .filter((d): d is number => d !== undefined)
+}
+
+/**
+ * Computes group boxes (via `positionGroups`) and, if any two distinct
+ * top-level boxes (`depth === 0` — nested children are never the cause of
+ * an overlap independent of their own top-level ancestor, since they're
+ * always contained within it by construction) still overlap, pushes them
+ * apart and recomputes.
+ *
+ * Deliberately does NOT patch group-box coordinates directly: a box's
+ * geometry is derived from its member nodes, and a parent's box can be
+ * numerically *outside* where its own children's boxes start (its extra
+ * nesting padding extends further out — see `extraPad` above). Patching
+ * boxes by a raw coordinate threshold can catch a descendant whose box
+ * clears the threshold while missing its ancestor, whose box doesn't —
+ * moving a child out from under its own parent's outline. Shifting the
+ * *nodes* instead and then calling `positionGroups` again keeps every box,
+ * nested or not, always freshly consistent with where its members ended up.
+ *
+ * Two groups can collide on either axis: stacked in adjacent layers (needs
+ * more vertical room — the `k3s-cluster` under `edge` case), or side by
+ * side in the *same* layer (needs more horizontal room — a wide nested
+ * group crowding a plain sibling group next to it, e.g. `k3s-cluster` vs
+ * `storage-tier`).
+ *
+ * Distinguished by each group's *depth range* — not just its shallowest
+ * depth: a group can span several depths (e.g. `infra` wraps `edge` at
+ * depth 0 *and* `storage-zone` down at depth 2), so comparing only the
+ * minimum would misjudge it as "different rows" from a depth-2-only
+ * sibling it actually shares a row with at that depth, triggering a
+ * vertical shift that (harmlessly for `edge`, but pointlessly) drags the
+ * whole subtree down on every pass. Overlapping ranges means "shares a
+ * row" at the intersecting depths — shift sideways; disjoint ranges means
+ * genuinely stacked — shift the whole later layer (and everything after
+ * it) down.
+ *
+ * The horizontal shift moves the *entire* higher-x top-level group
+ * (whichever one it is, in full — not just its slice at the intersecting
+ * depths) by the amount needed to clear the other's actual box. This
+ * deliberately never touches the lower-x group or any of its own nested
+ * content: shifting only part of it (or splitting the gap between both
+ * sides) sounds more "balanced," but a group's rendered box is one
+ * rectangle sized by its *widest* content at any depth (e.g. `infra`'s
+ * box is exactly as wide as `edge` requires, even where `storage-zone`
+ * alone would need less) — computing the needed clearance from anything
+ * narrower than that full box underestimates it. Note: per-layer
+ * centering elsewhere in positionLayers means a group sharing a depth
+ * layer with unrelated content (e.g. `storage-zone` sharing depth 2 with
+ * `clients`) can end up visually off-center under its own parent — that's
+ * an inherent property of centering each layer independently, not
+ * something this pass causes or can fix without moving the OTHER group's
+ * own content, which would just relocate the asymmetry rather than remove it.
+ */
+function resolveGroupOverlaps(
+  groups: Group[],
+  topLevel: Device[],
+  nodeMap: Map<string, PositionedNode>,
+  opts: Required<LayoutOptions>,
+): PositionedGroup[] {
+  let positioned = positionGroups(groups, topLevel, nodeMap, opts)
+
+  for (let pass = 0; pass < groups.length + topLevel.length + 1; pass++) {
+    const topLevelBoxes = positioned.filter((g) => (g.depth ?? 0) === 0)
+    if (topLevelBoxes.length < 2) return positioned
+
+    let shifted = false
+
+    outer: for (let i = 0; i < topLevelBoxes.length; i++) {
+      for (let j = i + 1; j < topLevelBoxes.length; j++) {
+        const a = topLevelBoxes[i]
+        const b = topLevelBoxes[j]
+
+        const xOverlap = a.x < b.x + b.width && a.x + a.width > b.x
+        const yOverlap = a.y < b.y + b.height && a.y + a.height > b.y
+        if (!xOverlap || !yOverlap) continue
+
+        const aDepths = subtreeMemberDepths(a.group.id, groups, topLevel, nodeMap)
+        const bDepths = subtreeMemberDepths(b.group.id, groups, topLevel, nodeMap)
+        if (aDepths.length === 0 || bDepths.length === 0) continue
+
+        const aMin = Math.min(...aDepths)
+        const aMax = Math.max(...aDepths)
+        const bMin = Math.min(...bDepths)
+        const bMax = Math.max(...bDepths)
+        const rangesOverlap = aMin <= bMax && bMin <= aMax
+
+        if (rangesOverlap) {
+          // Always move the group with the narrower depth range ("simple")
+          // in full, never the wider ("complex") one — moving a slice of
+          // the complex side risks leaving its own rendered box (sized by
+          // its widest content at ANY depth, not just this band) still
+          // colliding, and moving all of it would drag unrelated content
+          // at its other depths along for no reason. The simple side, by
+          // definition, has nothing outside this band to protect.
+          const aBreadth = aMax - aMin
+          const bBreadth = bMax - bMin
+          const [simple, complex] = aBreadth <= bBreadth ? [a, b] : [b, a]
+
+          const shift =
+            simple.x <= complex.x
+              ? simple.x + simple.width + opts.groupPadding - complex.x
+              : complex.x + complex.width + opts.groupPadding - simple.x
+          if (shift <= 0) continue
+          const signedShift = simple.x <= complex.x ? -shift : shift
+
+          const simpleSubtree = new Set([
+            simple.group.id,
+            ...getDescendantGroupIds(simple.group.id, groups),
+          ])
+          for (const d of topLevel) {
+            if (d.group === undefined || !simpleSubtree.has(d.group)) continue
+            const node = nodeMap.get(d.id)
+            if (node) node.x += signedShift
+          }
+        } else {
+          const [upper, lower] = aMax < bMin ? [a, b] : [b, a]
+          const shift = upper.y + upper.height + opts.groupPadding - lower.y
+          if (shift <= 0) continue
+          const lowerMin = a === lower ? aMin : bMin
+          for (const node of nodeMap.values()) {
+            if (node.depth >= lowerMin) node.y += shift
+          }
+        }
+
+        positioned = positionGroups(groups, topLevel, nodeMap, opts)
+        shifted = true
+        break outer
+      }
+    }
+
+    if (!shifted) break
+  }
+
+  return positioned
 }
 
 /** Bounding box of a set of positioned nodes; null if empty. */

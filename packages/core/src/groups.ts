@@ -76,6 +76,29 @@ export function findGroupCycle(groups: Group[]): string | null {
 }
 
 /**
+ * Walks a group's parent chain to find its outermost (root) ancestor id.
+ * Returns the group's own id when it has no parent. Assumes cycle-free
+ * input, matching {@link buildGroupDepths}' contract.
+ */
+export function getRootGroupId(groupId: string, groups: Group[]): string {
+  const byId = new Map(groups.map((g) => [g.id, g]))
+  const visited = new Set<string>()
+  let cursor = byId.get(groupId)
+  let result = groupId
+
+  while (cursor?.parent) {
+    if (visited.has(cursor.id)) break
+    visited.add(cursor.id)
+    const parent = byId.get(cursor.parent)
+    if (!parent) break
+    result = parent.id
+    cursor = parent
+  }
+
+  return result
+}
+
+/**
  * Returns the set of group ids that are descendants of `rootId`
  * (transitive children via the `parent` field), excluding `rootId` itself.
  */
