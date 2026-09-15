@@ -2,7 +2,7 @@ import { createHash } from 'crypto'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { FindOptionsWhere, IsNull, Repository } from 'typeorm'
-import type { HomelabDocument } from '@homelab-stackdoc/core'
+import type { HomelabDocument } from '@oriweave/core'
 import { Config } from './configs.entity'
 import { ConfigTag } from './config-tag.entity'
 import { CreateConfigDto, UpdateConfigDto } from './configs.dto'
@@ -181,12 +181,22 @@ export class ConfigsService {
     return { data, total }
   }
 
-  async findByUserId(userId: string): Promise<Config[]> {
-    return this.configRepo.find({
+  async findByUserId(
+    userId: string,
+    params: { page?: number; limit?: number } = {},
+  ): Promise<{ data: Config[]; total: number }> {
+    const page = params.page ?? 1
+    const limit = params.limit ?? 20
+
+    const [data, total] = await this.configRepo.findAndCount({
       where: { userId },
       relations: ['tags'],
       order: { updatedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
+
+    return { data, total }
   }
 
   async update(
@@ -204,7 +214,6 @@ export class ConfigsService {
       config.visibility = dto.visibility as Visibility
     }
 
-    // Update tags
     if (parsed?.meta?.tags) {
       await this.tagRepo.delete({ configId: config.id })
       const tagEntities = parsed.meta.tags.map((tag) =>
@@ -213,7 +222,12 @@ export class ConfigsService {
       await this.tagRepo.save(tagEntities)
     }
 
-    await this.configRepo.save(config)
+    await this.configRepo.update(config.id, {
+      yaml: config.yaml,
+      title: config.title,
+      contentHash: config.contentHash,
+      visibility: config.visibility,
+    })
 
     return this.configRepo.findOneOrFail({
       where: { id: config.id },

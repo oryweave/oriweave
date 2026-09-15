@@ -1,5 +1,6 @@
 import React from 'react'
-import type { ValidationError } from '@homelab-stackdoc/core'
+import type { ValidationError } from '@oriweave/core'
+import { colors } from '@oriweave/renderer'
 
 interface EditorStatusBarProps {
   networkCount: number
@@ -7,14 +8,6 @@ interface EditorStatusBarProps {
   connectionCount: number
   errors: ValidationError[]
   currentLine: number
-}
-
-const colors = {
-  border: 'rgba(0, 229, 255, 0.12)',
-  red: '#ff1744',
-  amber: '#ffab00',
-  green: '#00e676',
-  textMuted: '#455a64',
 }
 
 type Status = 'valid' | 'warning' | 'invalid'

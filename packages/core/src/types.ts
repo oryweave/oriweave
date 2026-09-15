@@ -75,6 +75,34 @@ export type DeviceType =
   | 'game-console'
   | 'media-player'
 
+// Runtime-accessible mirror of DeviceType, for consumers (e.g. editor
+// autocomplete) that need the value list, not just the compile-time type.
+export const DEVICE_TYPES = [
+  'router',
+  'switch',
+  'firewall',
+  'server',
+  'hypervisor',
+  'vm',
+  'container',
+  'nas',
+  'desktop',
+  'laptop',
+  'phone',
+  'tablet',
+  'camera',
+  'tv',
+  'iot',
+  'ap',
+  'modem',
+  'vpn',
+  'mini-pc',
+  'sbc',
+  'printer',
+  'game-console',
+  'media-player',
+] as const satisfies readonly DeviceType[]
+
 export interface DeviceSpecs {
   cpu?: string
   ram?: string
@@ -133,6 +161,16 @@ export interface Connection {
 }
 
 export type ConnectionType = 'ethernet' | 'wifi' | 'vpn' | 'usb' | 'thunderbolt' | 'fiber'
+
+// Runtime-accessible mirror of ConnectionType — see DEVICE_TYPES above.
+export const CONNECTION_TYPES = [
+  'ethernet',
+  'wifi',
+  'vpn',
+  'usb',
+  'thunderbolt',
+  'fiber',
+] as const satisfies readonly ConnectionType[]
 
 /* ─── Layout Output Types ──────────────────────────────────────────
  *

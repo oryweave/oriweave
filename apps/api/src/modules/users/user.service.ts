@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from './user.entity'
-import type { GitHubProfile } from './user.types'
 import { AuthProvider } from '@/common/utils/enums'
+import type { GitHubUserResponse } from '@/providers/github/github.types'
 
 @Injectable()
 export class UsersService {
   constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
-  async findOrCreateFromGitHub(profile: GitHubProfile): Promise<User> {
+  async findOrCreateFromGitHub(profile: GitHubUserResponse): Promise<User> {
     const githubId = String(profile.id)
 
     let user = await this.userRepository.findOne({ where: { githubId } })

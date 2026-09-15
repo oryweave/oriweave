@@ -1,6 +1,6 @@
 import React from 'react'
 import { colors, fonts } from '../theme'
-import type { PositionedGroup } from '@homelab-stackdoc/core'
+import type { PositionedGroup } from '@oriweave/core'
 
 interface GroupOutlineProps {
   group: PositionedGroup
@@ -106,7 +106,7 @@ export const GroupOutline: React.FC<GroupOutlineProps> = ({
   const groupOpacity = dimmed ? 0.18 : 1
 
   return (
-    <g style={{ opacity: groupOpacity, transition: 'opacity 0.2s' }}>
+    <g style={{ opacity: groupOpacity, transition: 'opacity 0.18s' }}>
       {/* Background fill — depth-tinted to make nesting read */}
       <rect
         x={x}

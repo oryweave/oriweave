@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { parse, layout } from '@homelab-stackdoc/core'
-import { TopologyCanvas, colors, fonts } from '@homelab-stackdoc/renderer'
-import type { PositionedGraph, Device, Connection } from '@homelab-stackdoc/core'
+import { parse, layout } from '@oriweave/core'
+import { TopologyCanvas, colors, fonts } from '@oriweave/renderer'
+import type { PositionedGraph, Device, Connection } from '@oriweave/core'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import SAMPLE_YAML from '../sample.yaml?raw'
@@ -11,7 +11,7 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span
     style={{
       padding: '4px 10px',
-      background: 'rgba(0, 229, 255, 0.06)',
+      background: 'rgba(255, 152, 0, 0.06)',
       border: `1px solid ${colors.border}`,
       borderRadius: 12,
       color: colors.textSecondary,
@@ -87,7 +87,9 @@ export const LandingPage: React.FC = () => {
         fontFamily: fonts.mono,
       }}
     >
-      <AppNav />
+      {/* No header CTA here — the hero's own "$ ORIWEAVE NEW" button already
+          covers it; showing both read as redundant. */}
+      <AppNav primaryAction={<></>} />
 
       {/* Hero */}
       <main
@@ -161,8 +163,8 @@ export const LandingPage: React.FC = () => {
               style={{
                 padding: '10px 16px',
                 background: primaryCtaHovered
-                  ? 'rgba(0, 229, 255, 0.18)'
-                  : 'rgba(0, 229, 255, 0.1)',
+                  ? 'rgba(255, 152, 0, 0.18)'
+                  : 'rgba(255, 152, 0, 0.1)',
                 border: `1px solid ${colors.primary}`,
                 borderRadius: 5,
                 color: colors.primary,
@@ -171,10 +173,10 @@ export const LandingPage: React.FC = () => {
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.06em',
-                transition: 'background 0.15s',
+                transition: 'background 0.12s',
               }}
             >
-              $ STACKDOC NEW
+              $ ORIWEAVE NEW
             </button>
             <button
               onClick={() => navigate('/gallery')}
@@ -182,7 +184,7 @@ export const LandingPage: React.FC = () => {
               onMouseLeave={() => setGhostCtaHovered(false)}
               style={{
                 padding: '10px 16px',
-                background: ghostCtaHovered ? 'rgba(0, 229, 255, 0.06)' : 'transparent',
+                background: ghostCtaHovered ? 'rgba(255, 152, 0, 0.06)' : 'transparent',
                 border: `1px solid ${colors.border}`,
                 borderRadius: 5,
                 color: colors.textSecondary,
@@ -191,7 +193,7 @@ export const LandingPage: React.FC = () => {
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.06em',
-                transition: 'background 0.15s',
+                transition: 'background 0.12s',
               }}
             >
               VIEW GALLERY
@@ -221,7 +223,7 @@ export const LandingPage: React.FC = () => {
             height: 540,
             border: `1px solid ${colors.border}`,
             borderRadius: 6,
-            background: 'rgba(8, 15, 30, 0.4)',
+            background: 'rgba(13, 17, 23, 0.4)',
             position: 'relative',
             overflow: 'hidden',
           }}

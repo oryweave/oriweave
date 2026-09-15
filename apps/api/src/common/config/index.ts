@@ -19,11 +19,6 @@ interface Config {
       secret: string
       expiresIn: string
     }
-    github: {
-      clientId: string
-      clientSecret: string
-      callbackUrl: string
-    }
   }
 
   database: {
@@ -32,6 +27,15 @@ interface Config {
 
   client: {
     url: string
+  }
+
+  github: {
+    oauth: {
+      clientId: string
+      clientSecret: string
+      callbackUrl: string
+    }
+    statsToken: string
   }
 }
 

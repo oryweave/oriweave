@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import type { GitHubTokenResponse, GitHubUserResponse, JwtPayload } from './auth.types'
+import type { JwtPayload } from './auth.types'
 import { config } from '@/common/config'
+import { GitHubService } from '@/providers/github/github.service'
 import { UsersService } from '@/modules/users/user.service'
 import type { User } from '@/modules/users/user.entity'
 
@@ -10,10 +11,11 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly githubService: GitHubService,
   ) {}
 
   getGitHubAuthUrl(state: string): string {
-    const { clientId, callbackUrl } = config().auth.github
+    const { clientId, callbackUrl } = config().github.oauth
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: callbackUrl,
@@ -25,46 +27,24 @@ export class AuthService {
   }
 
   async exchangeCodeForUser(code: string): Promise<User> {
-    const { clientId, clientSecret } = config().auth.github
+    const { clientId, clientSecret } = config().github.oauth
 
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-      }),
-    })
+    let tokenData
+    let profile
 
-    if (!tokenResponse.ok) {
-      throw new UnauthorizedException('Failed to exchange code for token')
+    try {
+      tokenData = await this.githubService.exchangeOAuthCode(code, { clientId, clientSecret })
+
+      if (!tokenData.access_token) {
+        throw new UnauthorizedException('No access token received from GitHub')
+      }
+
+      profile = await this.githubService.getAuthenticatedUser(tokenData.access_token)
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err
+      throw new UnauthorizedException(err instanceof Error ? err.message : 'GitHub OAuth failed')
     }
 
-    const tokenData = (await tokenResponse.json()) as GitHubTokenResponse
-
-    if (!tokenData.access_token) {
-      throw new UnauthorizedException('No access token received from GitHub')
-    }
-
-    // Fetch user profile
-    const userRes = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-        Accept: 'application/json',
-      },
-    })
-
-    if (!userRes.ok) {
-      throw new UnauthorizedException('Failed to fetch GitHub user profile')
-    }
-
-    const profile = (await userRes.json()) as GitHubUserResponse
-
-    // Find or create user in our database
     return this.usersService.findOrCreateFromGitHub(profile)
   }
 

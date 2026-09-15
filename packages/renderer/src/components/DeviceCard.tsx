@@ -3,7 +3,7 @@ import { colors, fonts, deviceAccent } from '../theme'
 import { getDeviceIconPath, getSpecIconPath } from '../icons'
 import { PortStrip } from './PortStrip'
 import { ServiceIcon } from './ServiceIcon'
-import type { PositionedNode, Device, PortAssignment, EnumeratedPort } from '@homelab-stackdoc/core'
+import type { PositionedNode, Device, PortAssignment, EnumeratedPort } from '@oriweave/core'
 
 interface DeviceCardProps {
   node: PositionedNode
@@ -81,7 +81,7 @@ const ChildCircle: React.FC<{
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         boxShadow: hovered ? `0 0 12px ${accent}33` : 'none',
         flexShrink: 0,
       }}
@@ -176,7 +176,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'opacity 0.2s, border-color 0.2s',
+          transition: 'opacity 0.18s, border-color 0.18s',
         }}
       >
         <svg width={14} height={14} viewBox="0 0 24 24" fill={accent}>
@@ -212,7 +212,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
         outlineOffset: focused ? 4 : 0,
         fontFamily: fonts.mono,
         cursor: onSelect ? 'pointer' : 'default',
-        transition: 'border-color 0.2s, box-shadow 0.2s, opacity 0.2s',
+        transition: 'border-color 0.18s, box-shadow 0.18s, opacity 0.18s',
         boxShadow: hovered ? `0 0 24px ${accent}22` : 'none',
         opacity,
         display: 'flex',
@@ -225,7 +225,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
           flexShrink: 0,
           background: accent,
           opacity: hovered ? 1 : 0.6,
-          transition: 'opacity 0.2s',
+          transition: 'opacity 0.18s',
         }}
       />
 

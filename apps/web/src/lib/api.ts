@@ -2,7 +2,8 @@ import {
   CreateConfigResponse,
   GalleryListResponse,
   GalleryQuery,
-  MyConfig,
+  GithubStats,
+  MyConfigListResponse,
   SharedConfig,
   TemplateCategory,
   TemplateDetail,
@@ -22,7 +23,7 @@ class ApiError extends Error {
 }
 
 const AUTH_INVALIDATED = 'auth:invalidated'
-const API_BASE = import.meta.env.VITE_API_URL || 'http://stackdoc.localhost:8087'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://oriweave.localhost:8087'
 const defaultInit: RequestInit = { credentials: 'include' }
 
 async function failedResponse(response: Response, fallback: string): Promise<never> {
@@ -72,20 +73,6 @@ async function forkConfig(slug: string): Promise<CreateConfigResponse> {
   return response.json()
 }
 
-async function createTemplateFromSlug(slug: string): Promise<CreateConfigResponse> {
-  const response = await fetch(`${API_BASE}/templates/${slug}/use`, {
-    ...defaultInit,
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message || `Failed to use template (${response.status})`)
-  }
-
-  return response.json()
-}
-
 async function logout(): Promise<void> {
   await fetch(`${API_BASE}/auth/logout`, { ...defaultInit, method: 'POST' })
 }
@@ -114,9 +101,11 @@ async function fetchConfig(slug: string): Promise<SharedConfig> {
   return response.json()
 }
 
-async function fetchMyConfigs(): Promise<MyConfig[]> {
+async function fetchMyConfigs(page = 1, limit = 20): Promise<MyConfigListResponse> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+
   try {
-    const response = await fetch(`${API_BASE}/configs/user/me`, defaultInit)
+    const response = await fetch(`${API_BASE}/configs/user/me?${params.toString()}`, defaultInit)
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -224,13 +213,24 @@ async function deleteConfig(slug: string): Promise<void> {
   }
 }
 
+// Never throws — the nav badge falls back to the plain icon on any failure, so a network
+// error here should look identical to the endpoint's own graceful { stars: null, forks: null }.
+async function fetchGithubStats(): Promise<GithubStats | null> {
+  try {
+    const response = await fetch(`${API_BASE}/github/stats`)
+    if (!response.ok) return null
+    return await response.json()
+  } catch {
+    return null
+  }
+}
+
 export {
   AUTH_INVALIDATED,
   ApiError,
   loginUrl,
   createConfig,
   forkConfig,
-  createTemplateFromSlug,
   logout,
   fetchMe,
   fetchConfig,
@@ -240,4 +240,5 @@ export {
   fetchGallery,
   updateConfig,
   deleteConfig,
+  fetchGithubStats,
 }

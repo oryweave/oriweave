@@ -8,7 +8,7 @@ import {
   highlightActiveLine,
   highlightActiveLineGutter,
 } from '@codemirror/view'
-import { lintGutter } from '@codemirror/lint'
+import { lintGutter, linter, forceLinting, type Diagnostic } from '@codemirror/lint'
 import React, { useRef, useEffect } from 'react'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import {
@@ -19,49 +19,55 @@ import {
 } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { yaml } from '@codemirror/lang-yaml'
+import type { ValidationError } from '@oriweave/core'
+import { colors, fonts } from '@oriweave/renderer'
+import { indentRainbow } from '../lib/indentRainbow'
+import { resolveErrorPositions } from '../lib/errorPositions'
+import { yamlValueCompletions } from '../lib/yamlCompletions'
 
 interface CodeMirrorEditorProps {
   value: string
   onChange: (value: string) => void
   onCursorChange?: (line: number) => void
+  errors?: ValidationError[]
 }
 
 const theme = EditorView.theme({
   '&': {
     height: '100%',
     fontSize: '13px',
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+    fontFamily: fonts.mono,
     backgroundColor: 'transparent',
   },
   '.cm-content': {
-    caretColor: '#00e5ff',
+    caretColor: colors.primary,
     padding: '16px 0',
   },
   '.cm-cursor': {
-    borderLeftColor: '#00e5ff',
+    borderLeftColor: colors.primary,
     borderLeftWidth: '2px',
   },
   '&.cm-focused .cm-cursor': {
-    borderLeftColor: '#00e5ff',
+    borderLeftColor: colors.primary,
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'rgba(0, 229, 255, 0.15) !important',
+    backgroundColor: `${colors.primaryDim} !important`,
   },
   '&.cm-focused': {
     outline: 'none',
   },
   '.cm-gutters': {
     backgroundColor: 'transparent',
-    borderRight: '1px solid rgba(0, 229, 255, 0.08)',
+    borderRight: '1px solid rgba(255, 152, 0, 0.08)',
     color: '#546e7a',
     minWidth: '40px',
   },
   '.cm-activeLineGutter': {
-    backgroundColor: 'rgba(0, 229, 255, 0.06)',
+    backgroundColor: 'rgba(255, 152, 0, 0.06)',
     color: '#b0bec5',
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(0, 229, 255, 0.04)',
+    backgroundColor: 'rgba(255, 152, 0, 0.04)',
   },
   '.cm-foldGutter .cm-gutterElement': {
     color: '#546e7a',
@@ -80,51 +86,54 @@ const theme = EditorView.theme({
     background: 'transparent',
   },
   '.cm-scroller::-webkit-scrollbar-thumb': {
-    background: 'rgba(0, 229, 255, 0.15)',
+    background: colors.primaryDim,
     borderRadius: '3px',
   },
 })
 
+// Syntax colors not backed by a brand token (e.g. tags.string, tags.comment) are
+// deliberate one-off differentiation for code highlighting, not UI drift.
 const highlightColors = HighlightStyle.define([
-  { tag: tags.keyword, color: '#00e5ff', fontWeight: 'bold' },
-  { tag: tags.atom, color: '#d500f9' },
-  { tag: tags.bool, color: '#d500f9' },
-  { tag: tags.null, color: '#78909c' },
-  { tag: tags.number, color: '#ffab00' },
+  { tag: tags.keyword, color: colors.primary, fontWeight: 'bold' },
+  { tag: tags.atom, color: colors.purple },
+  { tag: tags.bool, color: colors.purple },
+  { tag: tags.null, color: colors.textSecondary },
+  { tag: tags.number, color: colors.amber },
   { tag: tags.string, color: '#a5d6a7' },
   { tag: tags.comment, color: '#546e7a', fontStyle: 'italic' },
   { tag: tags.meta, color: '#90a4ae' },
-  { tag: tags.propertyName, color: '#4dd0e1' },
-  { tag: tags.definition(tags.propertyName), color: '#4dd0e1' },
-  { tag: tags.typeName, color: '#ffab00' },
-  { tag: tags.punctuation, color: '#78909c' },
-  { tag: tags.separator, color: '#78909c' },
-  { tag: tags.operator, color: '#78909c' },
-  { tag: tags.variableName, color: '#e0f7fa' },
-  { tag: tags.content, color: '#e0f7fa' },
-  { tag: tags.name, color: '#4dd0e1' },
+  { tag: tags.propertyName, color: colors.primaryLight },
+  { tag: tags.definition(tags.propertyName), color: colors.primaryLight },
+  { tag: tags.typeName, color: colors.amber },
+  { tag: tags.punctuation, color: colors.textSecondary },
+  { tag: tags.separator, color: colors.textSecondary },
+  { tag: tags.operator, color: colors.textSecondary },
+  { tag: tags.variableName, color: colors.textPrimary },
+  { tag: tags.content, color: colors.textPrimary },
+  { tag: tags.name, color: colors.primaryLight },
 ])
 
 const syntaxColors = EditorView.theme({
   // YAML keys
-  '.cm-propertyName': { color: '#00e5ff' },
-  '.cm-string': { color: '#00e676' },
-  '.cm-number': { color: '#ffab00' },
-  '.cm-bool': { color: '#d500f9' },
-  '.cm-null': { color: '#78909c' },
-  '.cm-comment': { color: '#455a64' },
-  '.cm-meta': { color: '#78909c' },
+  '.cm-propertyName': { color: colors.primary },
+  '.cm-string': { color: colors.green },
+  '.cm-number': { color: colors.amber },
+  '.cm-bool': { color: colors.purple },
+  '.cm-null': { color: colors.textSecondary },
+  '.cm-comment': { color: colors.textMuted },
+  '.cm-meta': { color: colors.textSecondary },
   '.cm-punctuation': { color: '#546e7a' },
-  '.cm-atom': { color: '#d500f9' },
-  '.cm-keyword': { color: '#00e5ff' },
-  '.cm-typeName': { color: '#ffab00' },
-  '.cm-definition': { color: '#00e5ff' },
+  '.cm-atom': { color: colors.purple },
+  '.cm-keyword': { color: colors.primary },
+  '.cm-typeName': { color: colors.amber },
+  '.cm-definition': { color: colors.primary },
 })
 
 export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
   onCursorChange,
+  errors,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -132,6 +141,8 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   onChangeRef.current = onChange
   const onCursorChangeRef = useRef(onCursorChange)
   onCursorChangeRef.current = onCursorChange
+  const errorsRef = useRef<ValidationError[]>(errors ?? [])
+  errorsRef.current = errors ?? []
 
   // Create editor on mount
   useEffect(() => {
@@ -157,9 +168,22 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         foldGutter(),
         bracketMatching(),
         highlightSelectionMatches(),
-        autocompletion(),
+        autocompletion({ override: [yamlValueCompletions] }),
+        linter((view): Diagnostic[] => {
+          const currentErrors = errorsRef.current
+          if (currentErrors.length === 0) return []
+          const text = view.state.doc.toString()
+          const positions = resolveErrorPositions(text, currentErrors)
+          return currentErrors.map((error, i) => ({
+            from: positions[i].from,
+            to: positions[i].to,
+            severity: error.severity,
+            message: error.message,
+          }))
+        }),
         lintGutter(),
         yaml(),
+        indentRainbow,
         syntaxHighlighting(highlightColors),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
         theme,
@@ -199,6 +223,13 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       })
     }
   }, [value])
+
+  // errorsRef is updated above on every render, but CodeMirror's own linter only
+  // re-runs on doc changes — force a re-lint whenever the errors themselves change
+  // (from parent re-validation) so squiggles never lag behind the error panel/status bar.
+  useEffect(() => {
+    if (viewRef.current) forceLinting(viewRef.current)
+  }, [errors])
 
   return (
     <div

@@ -1,5 +1,5 @@
 {
-  "name": "@homelab-stackdoc/renderer",
+  "name": "@oriweave/renderer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@homelab-stackdoc/core": "workspace:*",
+    "@oriweave/core": "workspace:*",
     "react": "^18.3.0"
   },
   "devDependencies": {

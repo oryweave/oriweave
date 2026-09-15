@@ -3,19 +3,19 @@ import type { Config } from '@docusaurus/types'
 import type * as Preset from '@docusaurus/preset-classic'
 
 const config: Config = {
-  title: 'StackDoc',
+  title: 'Oriweave',
   tagline: 'Document your homelab as YAML. Render it as a live topology.',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   future: {
     v4: true,
   },
 
-  url: 'https://stackdoc-docs.kazuki.uk',
+  url: 'https://docs.oriweave.dev',
   baseUrl: '/',
 
-  organizationName: 'thatkazuk1',
-  projectName: 'infra-stackdoc',
+  organizationName: 'oryweave',
+  projectName: 'oriweave',
 
   onBrokenLinks: 'throw',
 
@@ -29,9 +29,10 @@ const config: Config = {
       'classic',
       {
         docs: {
+          path: 'concepts',
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/thatkazuk1/infra-stackdoc/tree/develop/docs/',
+          editUrl: 'https://github.com/oryweave/oriweave/tree/develop/docs/',
         },
         blog: false,
         theme: {
@@ -46,7 +47,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'StackDoc',
+      title: 'Oriweave',
       items: [
         {
           type: 'docSidebar',
@@ -55,12 +56,12 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://stackdoc.kazuki.uk',
+          href: 'https://oriweave.dev',
           label: 'Live app',
           position: 'right',
         },
         {
-          href: 'https://github.com/thatkazuk1/infra-stackdoc',
+          href: 'https://github.com/oryweave/oriweave',
           label: 'GitHub',
           position: 'right',
         },
@@ -81,9 +82,9 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            { label: 'Live app', href: 'https://stackdoc.kazuki.uk' },
-            { label: 'GitHub', href: 'https://github.com/thatkazuk1/infra-stackdoc' },
-            { label: 'Issues', href: 'https://github.com/thatkazuk1/infra-stackdoc/issues' },
+            { label: 'Live app', href: 'https://oriweave.dev' },
+            { label: 'GitHub', href: 'https://github.com/oryweave/oriweave' },
+            { label: 'Issues', href: 'https://github.com/oryweave/oriweave/issues' },
           ],
         },
       ],

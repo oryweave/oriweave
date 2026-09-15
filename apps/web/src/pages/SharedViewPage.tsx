@@ -1,29 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { parse, layout } from '@homelab-stackdoc/core'
-import { TopologyCanvas } from '@homelab-stackdoc/renderer'
+import { parse, layout } from '@oriweave/core'
+import { TopologyCanvas, colors, fonts } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
 import { fetchConfig, forkConfig, deleteConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import type { SharedConfig } from '../lib/api.types'
-
-const colors = {
-  background: '#080f1e',
-  backgroundSubtle: '#0c1527',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
-  green: '#00e676',
-  red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   const [hovered, setHovered] = useState(false)
@@ -37,7 +20,7 @@ const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         alignItems: 'center',
         gap: 5,
         padding: '5px 12px',
-        background: hovered ? 'rgba(0, 229, 255, 0.1)' : 'transparent',
+        background: hovered ? 'rgba(255, 152, 0, 0.1)' : 'transparent',
         border: `1px solid ${colors.primary}`,
         borderRadius: 5,
         color: colors.primary,
@@ -46,7 +29,7 @@ const EditNavButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
         fontSize: 10,
         fontWeight: 700,
         letterSpacing: '0.06em',
-        transition: 'background 0.15s',
+        transition: 'background 0.12s',
       }}
     >
       EDIT
@@ -445,7 +428,7 @@ const ActionPill: React.FC<{
         fontFamily: fonts.mono,
         fontSize: 10,
         fontWeight: 600,
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >

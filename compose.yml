@@ -1,9 +1,9 @@
-name: homelab-stackdoc
+name: oriweave
 
 x-postgres-env: &postgres-env
   POSTGRES_USER: ${POSTGRES_USER:-postgres}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-  POSTGRES_DB: ${POSTGRES_DB:-stackdoc-db}
+  POSTGRES_DB: ${POSTGRES_DB:-oriweave-db}
 
 services:
   db:
@@ -25,5 +25,5 @@ volumes:
   postgres-data:
 
 networks:
-  stackdoc:
-    name: homelab-stackdoc
+  oriweave:
+    name: oriweave

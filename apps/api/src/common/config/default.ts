@@ -1,5 +1,5 @@
 import { Environment } from '@/common/utils/enums'
-import { getEnvironmentValue } from '@/common/utils/env'
+import { getEnvironmentValue, getSecretValue } from '@/common/utils/env'
 import { type Config } from '.'
 
 const config = (): Config => ({
@@ -11,28 +11,32 @@ const config = (): Config => ({
 
   auth: {
     jwt: {
-      secret: getEnvironmentValue('JWT_SECRET', 'stackdoc-dev-secret-change-in-production'),
+      secret: getSecretValue('JWT_SECRET', 'oriweave-dev-secret-change-in-production'),
       expiresIn: getEnvironmentValue('JWT_EXPIRES_IN', '7d'),
-    },
-    github: {
-      clientId: getEnvironmentValue('GITHUB_CLIENT_ID', ''),
-      clientSecret: getEnvironmentValue('GITHUB_CLIENT_SECRET', ''),
-      callbackUrl: getEnvironmentValue(
-        'GITHUB_CALLBACK_URL',
-        'http://stackdoc.localhost:8087/auth/github/callback',
-      ),
     },
   },
 
   database: {
-    url: getEnvironmentValue(
+    url: getSecretValue(
       'DATABASE_URL',
-      'postgresql://postgres:postgres@localhost:5432/stackdoc-db',
+      'postgresql://postgres:postgres@localhost:5432/oriweave-db',
     ),
   },
 
   client: {
-    url: getEnvironmentValue('CLIENT_URL', 'http://stackdoc.localhost:5173'),
+    url: getEnvironmentValue('CLIENT_URL', 'http://oriweave.localhost:5173'),
+  },
+
+  github: {
+    oauth: {
+      clientId: getEnvironmentValue('GITHUB_CLIENT_ID', ''),
+      clientSecret: getSecretValue('GITHUB_CLIENT_SECRET', ''),
+      callbackUrl: getEnvironmentValue(
+        'GITHUB_CALLBACK_URL',
+        'http://oriweave.localhost:8087/auth/github/callback',
+      ),
+    },
+    statsToken: getEnvironmentValue('GITHUB_STATS_TOKEN', ''),
   },
 })
 

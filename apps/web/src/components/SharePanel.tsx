@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { colors as tokenColors, fonts } from '@oriweave/renderer'
 import { createConfig, updateConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
@@ -6,23 +8,12 @@ interface SharePanelProps {
   yaml: string
   isExporting: boolean
   editingSlug?: string
+  initialVisibility?: 'public' | 'unlisted'
   onExportPng: () => void
 }
 
-const colors = {
-  background: 'rgba(12, 21, 39, 0.95)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
-  green: '#00e676',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
-}
-
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
+// Local alpha-blended variant of the surface token, for this dropdown's background.
+const colors = { ...tokenColors, background: 'rgba(22, 27, 34, 0.95)' }
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 9,
@@ -59,7 +50,7 @@ const ActionButton: React.FC<{
         gap: 10,
         width: '100%',
         padding: '8px 10px',
-        background: hovered ? 'rgba(0, 229, 255, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+        background: hovered ? 'rgba(255, 152, 0, 0.06)' : 'rgba(255, 255, 255, 0.02)',
         border: `1px solid ${hovered ? colors.borderHover : colors.border}`,
         borderRadius: 6,
         color: colors.textPrimary,
@@ -67,7 +58,7 @@ const ActionButton: React.FC<{
         fontFamily: fonts.mono,
         fontSize: 12,
         textAlign: 'left',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >
@@ -107,8 +98,10 @@ export const SharePanel: React.FC<SharePanelProps> = ({
   onExportPng,
   isExporting,
   editingSlug,
+  initialVisibility,
 }) => {
   const { isLoggedIn } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
@@ -116,7 +109,14 @@ export const SharePanel: React.FC<SharePanelProps> = ({
   const [justShared, setJustShared] = useState(false)
   const [shareResult, setShareResult] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'unlisted'>(
+    initialVisibility ?? 'unlisted',
+  )
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (initialVisibility) setVisibility(initialVisibility)
+  }, [initialVisibility])
 
   useEffect(() => {
     if (!open) return
@@ -185,8 +185,8 @@ export const SharePanel: React.FC<SharePanelProps> = ({
 
     try {
       const result = editingSlug
-        ? await updateConfig(editingSlug, yaml)
-        : await createConfig(yaml, 'unlisted')
+        ? await updateConfig(editingSlug, yaml, visibility)
+        : await createConfig(yaml, visibility)
       const url = `${window.location.origin}/s/${result.slug}`
 
       await copyToClipboard(url)
@@ -194,6 +194,14 @@ export const SharePanel: React.FC<SharePanelProps> = ({
       setShareResult(url)
       setJustShared(true)
       setTimeout(() => setJustShared(false), 2000)
+
+      // First share of this session, while signed in: move onto /edit/:slug so
+      // further saves update this config instead of creating a new one each time
+      // (previously every "Share as Link" click from /editor created a fresh row,
+      // littering the gallery/My Configs with near-duplicates from the same author).
+      if (!editingSlug && isLoggedIn) {
+        navigate(`/edit/${result.slug}`, { replace: true })
+      }
     } catch (err) {
       setShareError(err instanceof Error ? err.message : 'Failed to share')
       setTimeout(() => setShareError(null), 4000)
@@ -257,7 +265,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.04em',
-          transition: 'all 0.15s',
+          transition: 'all 0.12s',
         }}
       >
         <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
@@ -295,7 +303,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
               alignItems: 'center',
               gap: 8,
               padding: '8px 10px',
-              background: 'rgba(8, 15, 30, 0.6)',
+              background: 'rgba(13, 17, 23, 0.6)',
               border: `1px solid ${colors.border}`,
               borderRadius: 4,
               fontFamily: fonts.mono,
@@ -346,6 +354,47 @@ export const SharePanel: React.FC<SharePanelProps> = ({
             </div>
           )}
 
+          <div style={{ ...sectionLabel, marginTop: 4 }}>VISIBILITY</div>
+
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['unlisted', 'public'] as const).map((option) => (
+              <button
+                key={option}
+                onClick={() => setVisibility(option)}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  background:
+                    visibility === option ? 'rgba(255, 152, 0, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                  border: `1px solid ${visibility === option ? colors.primary : colors.border}`,
+                  borderRadius: 5,
+                  color: visibility === option ? colors.primary : colors.textSecondary,
+                  cursor: 'pointer',
+                  fontFamily: fonts.mono,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: colors.textMuted,
+              paddingLeft: 2,
+              fontFamily: fonts.mono,
+            }}
+          >
+            {visibility === 'public'
+              ? 'Listed in the public gallery'
+              : 'Only visible to people with the link'}
+          </div>
+
           {/* Primary action — share new or update existing */}
           <ActionButton
             onClick={handlePrimaryAction}
@@ -367,7 +416,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
                 border: '1px solid rgba(255,23,68,0.25)',
                 borderRadius: 5,
                 fontSize: 9,
-                color: '#ff1744',
+                color: colors.red,
                 fontFamily: fonts.mono,
               }}
             >
@@ -387,7 +436,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
               </svg>
             }
             label={isExporting ? 'Exporting...' : 'Export as PNG'}
-            sublabel="High-res image for Reddit"
+            sublabel="High-res image for Reddit · Ctrl+Shift+P"
           />
 
           <ActionButton

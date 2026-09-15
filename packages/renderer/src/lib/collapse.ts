@@ -1,4 +1,4 @@
-import type { Group, PositionedEdge, PositionedGroup, PositionedNode } from '@homelab-stackdoc/core'
+import type { Group, PositionedEdge, PositionedGroup, PositionedNode } from '@oriweave/core'
 
 /**
  * Returns the set of group ids that are descendants of `rootId`

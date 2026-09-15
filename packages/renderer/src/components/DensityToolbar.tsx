@@ -40,7 +40,7 @@ const Chip: React.FC<{
         letterSpacing: '0.06em',
         padding: '4px 8px',
         cursor: 'pointer',
-        transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+        transition: 'background 0.12s, border-color 0.12s, color 0.12s',
         textTransform: 'uppercase',
       }}
     >
@@ -98,7 +98,7 @@ export const DensityToolbar: React.FC<DensityToolbarProps> = ({
         alignItems: 'center',
         gap: 10,
         padding: '6px 10px',
-        background: 'rgba(12, 21, 39, 0.92)',
+        background: 'rgba(22, 27, 34, 0.92)',
         backdropFilter: 'blur(8px)',
         border: `1px solid ${colors.border}`,
         borderRadius: 6,

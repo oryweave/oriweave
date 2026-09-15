@@ -8,8 +8,8 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "paths": {
-      "@homelab-stackdoc/core": ["../../packages/core/src"],
-      "@homelab-stackdoc/renderer": ["../../packages/renderer/src"]
+      "@oriweave/core": ["../../packages/core/src"],
+      "@oriweave/renderer": ["../../packages/renderer/src"]
     }
   },
   "include": ["src"]

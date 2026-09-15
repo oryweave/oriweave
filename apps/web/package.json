@@ -1,5 +1,5 @@
 {
-  "name": "@homelab-stackdoc/web",
+  "name": "@oriweave/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,15 +17,16 @@
     "@codemirror/search": "^6.6.0",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.40.0",
-    "@homelab-stackdoc/core": "workspace:*",
-    "@homelab-stackdoc/renderer": "workspace:*",
+    "@oriweave/core": "workspace:*",
+    "@oriweave/renderer": "workspace:*",
     "@lezer/highlight": "^1.2.3",
     "codemirror": "^6.0.2",
     "html2canvas": "^1.4.1",
     "js-yaml": "^4.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.14.2"
+    "react-router-dom": "^7.14.2",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

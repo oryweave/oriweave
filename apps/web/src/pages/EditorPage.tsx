@@ -1,8 +1,10 @@
 import html2canvas from 'html2canvas'
-import React, { useState, useMemo, useCallback, useRef } from 'react'
-import { parse, layout } from '@homelab-stackdoc/core'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { parse, layout } from '@oriweave/core'
+import { colors, fonts, radii, motion } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
+import { KeyboardShortcutsPanel } from '../components/KeyboardShortcutsPanel'
 import { PreviewPane } from '../components/PreviewPane'
 import SAMPLE_YAML from '../sample.yaml?raw'
 import { SharePanel } from '../components/SharePanel'
@@ -11,6 +13,7 @@ import { YamlEditor } from '../components/YamlEditor'
 interface EditorPageProps {
   initialYaml?: string
   editingSlug?: string
+  initialVisibility?: 'public' | 'unlisted'
 }
 
 const toggleButtonStyle: React.CSSProperties = {
@@ -23,22 +26,28 @@ const toggleButtonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(12, 21, 39, 0.9)',
-  border: '1px solid rgba(0, 229, 255, 0.12)',
-  borderRadius: 6,
-  color: '#78909c',
+  background: 'rgba(22, 27, 34, 0.9)',
+  border: `1px solid ${colors.border}`,
+  borderRadius: radii.md,
+  color: colors.textSecondary,
   cursor: 'pointer',
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: fonts.mono,
   fontSize: 14,
   padding: 0,
-  transition: 'all 0.15s',
+  transition: `all ${motion.fast}`,
 }
 
-export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug }) => {
+export const EditorPage: React.FC<EditorPageProps> = ({
+  initialYaml,
+  editingSlug,
+  initialVisibility,
+}) => {
   const [yaml, setYaml] = useState(initialYaml || SAMPLE_YAML)
-  const [splitRatio, setSplitRatio] = useState(0.22)
+  const [splitRatio, setSplitRatio] = useState(0.27)
   const [resizing, setResizing] = useState(false)
   const [editorVisible, setEditorVisible] = useState(true)
+  const [renderNonce, setRenderNonce] = useState(0)
+  const [justRerendered, setJustRerendered] = useState(false)
 
   const captureRef = useRef<HTMLDivElement>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -79,7 +88,10 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
         networkCount: 0,
       }
     }
-  }, [yaml])
+    // renderNonce isn't read above — it's here purely to let Ctrl+S force a fresh
+    // layout pass (e.g. retry after a transient layout error) even when yaml hasn't changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yaml, renderNonce])
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -102,7 +114,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
     setIsExporting(true)
     try {
       const canvas = await html2canvas(captureRef.current, {
-        backgroundColor: '#080f1e',
+        backgroundColor: colors.background,
         scale: 2,
         useCORS: true,
         logging: false,
@@ -120,7 +132,32 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
     }
   }, [graph])
 
-  const title = editingSlug ? `EDITING: ${editingSlug}` : 'EDITOR'
+  // Ctrl/Cmd+S: force a fresh layout pass. Ctrl/Cmd+E: toggle the editor pane.
+  // Ctrl/Cmd+Shift+P: export PNG. Global (not scoped to the YAML editor) so they
+  // work regardless of which pane has focus.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey
+      if (!mod) return
+      const key = e.key.toLowerCase()
+
+      if (!e.shiftKey && key === 's') {
+        e.preventDefault()
+        setRenderNonce((n) => n + 1)
+        setJustRerendered(true)
+        setTimeout(() => setJustRerendered(false), 1200)
+      } else if (!e.shiftKey && key === 'e') {
+        e.preventDefault()
+        setEditorVisible((v) => !v)
+      } else if (e.shiftKey && key === 'p') {
+        e.preventDefault()
+        handleExportPng()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleExportPng])
 
   return (
     <div
@@ -130,20 +167,10 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
         height: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        background: '#080f1e',
+        background: colors.background,
       }}
     >
-      <AppNav
-        title={title}
-        primaryAction={
-          <SharePanel
-            yaml={yaml}
-            onExportPng={handleExportPng}
-            isExporting={isExporting}
-            editingSlug={editingSlug}
-          />
-        }
-      />
+      <AppNav />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* Editor pane */}
@@ -165,8 +192,8 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
                 width: 5,
                 cursor: 'col-resize',
                 flexShrink: 0,
-                background: resizing ? 'rgba(0,229,255,0.3)' : 'rgba(0,229,255,0.08)',
-                transition: 'background 0.15s',
+                background: resizing ? colors.primaryBorder : 'rgba(255,152,0,0.08)',
+                transition: `background ${motion.fast}`,
               }}
             />
           </>
@@ -178,14 +205,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
           <button
             onClick={() => setEditorVisible((v) => !v)}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.35)'
-              e.currentTarget.style.color = '#00e5ff'
+              e.currentTarget.style.borderColor = colors.borderHover
+              e.currentTarget.style.color = colors.primary
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.12)'
-              e.currentTarget.style.color = '#78909c'
+              e.currentTarget.style.borderColor = colors.border
+              e.currentTarget.style.color = colors.textSecondary
             }}
-            title={editorVisible ? 'Hide editor' : 'Show editor'}
+            title={`${editorVisible ? 'Hide editor' : 'Show editor'} (Ctrl+E)`}
             style={toggleButtonStyle}
           >
             <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
@@ -197,12 +224,47 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
             </svg>
           </button>
 
+          {justRerendered && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 8,
+                left: 48,
+                zIndex: 20,
+                padding: '6px 10px',
+                background: 'rgba(22, 27, 34, 0.9)',
+                border: `1px solid ${colors.primaryBorder}`,
+                borderRadius: radii.md,
+                color: colors.primary,
+                fontFamily: fonts.mono,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                pointerEvents: 'none',
+              }}
+            >
+              ⟳ RE-RENDERED
+            </div>
+          )}
+
           <PreviewPane
             graph={graph}
             errors={errors}
             deviceMap={deviceMap}
             connections={connections}
             captureRef={captureRef}
+            headerActions={
+              <>
+                <KeyboardShortcutsPanel />
+                <SharePanel
+                  yaml={yaml}
+                  onExportPng={handleExportPng}
+                  isExporting={isExporting}
+                  editingSlug={editingSlug}
+                  initialVisibility={initialVisibility}
+                />
+              </>
+            }
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import type { ValidationError } from '@homelab-stackdoc/core'
+import type { ValidationError } from '@oriweave/core'
+import { colors, fonts } from '@oriweave/renderer'
 import { CodeMirrorEditor } from './CodeMirrorEditor'
 import { EditorStatusBar } from './EditorStatusBar'
 
@@ -10,14 +11,6 @@ interface YamlEditorProps {
   networkCount: number
   deviceCount: number
   connectionCount: number
-}
-
-const colors = {
-  border: 'rgba(0, 229, 255, 0.12)',
-  red: '#ff1744',
-  amber: '#ffab00',
-  green: '#00e676',
-  textSecondary: '#78909c',
 }
 
 export const YamlEditor: React.FC<YamlEditorProps> = ({
@@ -38,8 +31,8 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: '#06090f',
-        fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+        background: colors.backgroundDeep,
+        fontFamily: fonts.mono,
       }}
     >
       {/* Toolbar */}
@@ -82,7 +75,12 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
       {/* Editor */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        <CodeMirrorEditor value={value} onChange={onChange} onCursorChange={setCurrentLine} />
+        <CodeMirrorEditor
+          value={value}
+          onChange={onChange}
+          onCursorChange={setCurrentLine}
+          errors={errors}
+        />
       </div>
 
       {/* Error panel */}

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, useParams, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
+import { colors, fonts } from '@oriweave/renderer'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { EditorPage } from './pages/EditorPage'
 import { fetchConfig } from './lib/api'
@@ -8,14 +9,6 @@ import { LandingPage } from './pages/LandingPage'
 import { MyConfigsPage } from './pages/MyConfigsPage'
 import { SharedView } from './pages/SharedViewPage'
 import { TemplatesPage } from './pages/TemplatesPage'
-
-const colors = {
-  background: '#080f1e',
-  textMuted: '#455a64',
-}
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
 
 const FullScreenMessage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
@@ -46,6 +39,7 @@ const EditOwnConfig: React.FC = () => {
   const { user, isLoading } = useAuth()
 
   const [yaml, setYaml] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'unlisted'>('unlisted')
   const [error, setError] = useState<string | null>(null)
   const [authorChecked, setAuthorChecked] = useState(false)
 
@@ -64,6 +58,7 @@ const EditOwnConfig: React.FC = () => {
           return
         }
         setYaml(config.yaml)
+        setVisibility(config.visibility === 'public' ? 'public' : 'unlisted')
         setAuthorChecked(true)
       })
       .catch((err) => {
@@ -84,7 +79,7 @@ const EditOwnConfig: React.FC = () => {
     return <FullScreenMessage>Loading config...</FullScreenMessage>
   }
 
-  return <EditorPage initialYaml={yaml} editingSlug={slug} />
+  return <EditorPage initialYaml={yaml} editingSlug={slug} initialVisibility={visibility} />
 }
 
 export const App: React.FC = () => {

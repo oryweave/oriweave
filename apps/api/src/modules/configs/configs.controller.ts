@@ -8,7 +8,6 @@ import {
   Body,
   Query,
   Req,
-  UsePipes,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -16,7 +15,12 @@ import {
 } from '@nestjs/common'
 import type { Request } from 'express'
 import { ConfigsService } from './configs.service'
-import { CreateConfigDto, ListConfigsQueryDto, UpdateConfigDto } from './configs.dto'
+import {
+  CreateConfigDto,
+  ListConfigsQueryDto,
+  ListMyConfigsQueryDto,
+  UpdateConfigDto,
+} from './configs.dto'
 import { AuthGuard } from '@/modules/auth/auth.guard'
 import { OptionalAuthGuard } from '@/modules/auth/auth-optional.guard'
 import { YamlValidationPipe } from '@/common/pipes/yaml-validation.pipe'
@@ -27,8 +31,7 @@ export class ConfigsController {
 
   @Post()
   @UseGuards(OptionalAuthGuard)
-  @UsePipes(YamlValidationPipe)
-  async create(@Body() dto: CreateConfigDto, @Req() request: Request) {
+  async create(@Body(YamlValidationPipe) dto: CreateConfigDto, @Req() request: Request) {
     const user = request.user
     const config = await this.configsService.create(dto, user?.id)
     return {
@@ -52,13 +55,29 @@ export class ConfigsController {
 
   @Get('user/me')
   @UseGuards(AuthGuard)
-  async myConfigs(@Req() request: Request) {
+  async myConfigs(@Query() query: ListMyConfigsQueryDto, @Req() request: Request) {
     const user = request.user
     if (!user) {
       throw new ForbiddenException()
     }
 
-    return this.configsService.findByUserId(user.id)
+    const page = Math.max(1, parseInt(query.page || '1', 10))
+    const limit = Math.min(50, Math.max(1, parseInt(query.limit || '20', 10)))
+
+    const { data, total } = await this.configsService.findByUserId(user.id, { page, limit })
+
+    return {
+      data: data.map((config) => ({
+        slug: config.slug,
+        title: config.title,
+        visibility: config.visibility,
+        viewCount: config.viewCount,
+        tags: config.tags.map((t) => ({ tag: t.tag })),
+        createdAt: config.createdAt,
+        updatedAt: config.updatedAt,
+      })),
+      total,
+    }
   }
 
   @Get()
@@ -112,8 +131,11 @@ export class ConfigsController {
 
   @Patch(':slug')
   @UseGuards(AuthGuard)
-  @UsePipes(YamlValidationPipe)
-  async update(@Param('slug') slug: string, @Body() dto: UpdateConfigDto, @Req() request: Request) {
+  async update(
+    @Param('slug') slug: string,
+    @Body(YamlValidationPipe) dto: UpdateConfigDto,
+    @Req() request: Request,
+  ) {
     const user = request.user
     if (!user) {
       throw new ForbiddenException()

@@ -1,4 +1,5 @@
 import React from 'react'
+import { colors, fonts, radii } from '@oriweave/renderer'
 
 interface FatalErrorProps {
   source: string
@@ -16,15 +17,15 @@ export const FatalError: React.FC<FatalErrorProps> = ({ source, status, onRetry 
         padding: '12px 16px',
         background: 'rgba(255, 23, 68, 0.08)',
         border: '1px solid rgba(255, 23, 68, 0.35)',
-        borderRadius: 4,
-        fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+        borderRadius: radii.sm,
+        fontFamily: fonts.mono,
         fontSize: 12,
-        color: '#ff1744',
+        color: colors.red,
       }}
     >
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ fontWeight: 700 }}>[fatal]</span> could not reach{' '}
-        <span style={{ color: '#e0f7fa' }}>{source}</span>{' '}
+        <span style={{ color: colors.textPrimary }}>{source}</span>{' '}
         <span style={{ color: 'rgba(255, 23, 68, 0.7)' }}>({status ?? 'network'})</span>
       </span>
       <button
@@ -33,8 +34,8 @@ export const FatalError: React.FC<FatalErrorProps> = ({ source, status, onRetry 
           padding: '4px 10px',
           background: 'transparent',
           border: '1px solid rgba(255, 23, 68, 0.5)',
-          borderRadius: 3,
-          color: '#ff1744',
+          borderRadius: radii.xs,
+          color: colors.red,
           fontFamily: 'inherit',
           fontSize: 10,
           fontWeight: 700,

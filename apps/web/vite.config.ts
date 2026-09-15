@@ -1,13 +1,19 @@
 import path from 'path'
+import { readFileSync } from 'fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const { version } = JSON.parse(readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'))
+
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   resolve: {
     alias: {
-      '@homelab-stackdoc/core': path.resolve(__dirname, '../../packages/core/src'),
-      '@homelab-stackdoc/renderer': path.resolve(__dirname, '../../packages/renderer/src'),
+      '@oriweave/core': path.resolve(__dirname, '../../packages/core/src'),
+      '@oriweave/renderer': path.resolve(__dirname, '../../packages/renderer/src'),
     },
   },
   build: {

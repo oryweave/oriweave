@@ -1,6 +1,6 @@
 import React from 'react'
-import { TopologyCanvas } from '@homelab-stackdoc/renderer'
-import type { PositionedGraph, ValidationError, Device, Connection } from '@homelab-stackdoc/core'
+import { colors, fonts, TopologyCanvas } from '@oriweave/renderer'
+import type { PositionedGraph, ValidationError, Device, Connection } from '@oriweave/core'
 
 interface PreviewPaneProps {
   graph: PositionedGraph | null
@@ -8,6 +8,7 @@ interface PreviewPaneProps {
   deviceMap: Map<string, Device>
   connections: Connection[]
   captureRef: React.RefObject<HTMLDivElement>
+  headerActions?: React.ReactNode
 }
 
 export const PreviewPane: React.FC<PreviewPaneProps> = ({
@@ -16,6 +17,7 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   deviceMap,
   connections,
   captureRef,
+  headerActions,
 }) => {
   if (errors.some((e) => e.severity === 'error') || !graph) {
     return (
@@ -25,9 +27,9 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          background: '#080f1e',
-          fontFamily: "'JetBrains Mono', monospace",
-          color: '#455a64',
+          background: colors.background,
+          fontFamily: fonts.mono,
+          color: colors.textMuted,
           fontSize: 13,
           textAlign: 'center',
           padding: 40,
@@ -44,7 +46,12 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
   return (
     <div style={{ position: 'relative', height: '100%' }}>
       <div ref={captureRef} style={{ height: '100%' }}>
-        <TopologyCanvas graph={graph} deviceMap={deviceMap} connections={connections} />
+        <TopologyCanvas
+          graph={graph}
+          deviceMap={deviceMap}
+          connections={connections}
+          headerActions={headerActions}
+        />
       </div>
     </div>
   )

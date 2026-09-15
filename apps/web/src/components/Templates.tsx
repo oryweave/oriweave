@@ -1,36 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ApiError, fetchTemplate, fetchTemplates, createTemplateFromSlug } from '../lib/api'
+import { colors as tokenColors, fonts } from '@oriweave/renderer'
+import { ApiError, fetchTemplate, fetchTemplates } from '../lib/api'
+import { CardThumbnail } from './CardThumbnail'
 import { FatalError } from './FatalError'
-import { MiniDots } from './MiniDots'
-import { useAuth } from '../context/AuthContext'
 import type { TemplateCategory, TemplateSummary } from '../lib/api.types'
 
-const colors = {
-  background: '#080f1e',
-  cardBackground: 'rgba(12, 21, 39, 0.6)',
-  border: 'rgba(0, 229, 255, 0.12)',
-  borderHover: 'rgba(0, 229, 255, 0.35)',
-  primary: '#00e5ff',
-  red: '#ff1744',
-  textPrimary: '#e0f7fa',
-  textSecondary: '#78909c',
-  textMuted: '#455a64',
-}
+// Local translucent variant of the card surface, for this page's card background.
+const colors = { ...tokenColors, cardBackground: 'rgba(22, 27, 34, 0.6)' }
 
-const fonts = {
-  mono: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
-}
-
+// 'monitoring'/'home-automation' are deliberate one-off variety colors, not brand tokens.
 const categoryColor: Record<TemplateCategory | 'uncategorised', string> = {
-  networking: '#00e5ff',
-  media: '#d500f9',
-  virtualization: '#ffab00',
-  storage: '#00e676',
+  networking: colors.primary,
+  media: colors.purple,
+  virtualization: colors.amber,
+  storage: colors.green,
   monitoring: '#ffd600',
   'home-automation': '#ff5252',
-  general: '#78909c',
-  uncategorised: '#78909c',
+  general: colors.textSecondary,
+  uncategorised: colors.textSecondary,
 }
 
 interface CategoryOption {
@@ -51,7 +39,6 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate()
-  const { isLoggedIn } = useAuth()
   const [templates, setTemplates] = useState<TemplateSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fatal, setFatal] = useState<{ status: number | null } | null>(null)
@@ -81,17 +68,13 @@ export const Templates: React.FC = () => {
   const handleUse = async (template: TemplateSummary) => {
     setUsingSlug(template.slug)
     try {
-      if (isLoggedIn) {
-        // Logged-in path: server-side fork creates a new config owned by the
-        // user. Land them on the editor for that config so they can save.
-        const created = await createTemplateFromSlug(template.slug)
-        navigate(`/edit/${created.slug}`)
-      } else {
-        // Anonymous path: don't persist anything yet. Just preload the YAML
-        // into the editor; the user can choose to save (and sign in) later.
-        const detail = await fetchTemplate(template.slug)
-        navigate('/editor', { state: { yaml: detail.yaml } })
-      }
+      // Don't persist anything yet — just preload the template's YAML into a
+      // scratch editor session. Nothing lands in My Configs / the gallery until
+      // the user actually shares/saves it (previously, signed-in users got a
+      // config forked into their account immediately on click, before any edit,
+      // and repeating this for the same template kept creating more of them).
+      const detail = await fetchTemplate(template.slug)
+      navigate('/editor', { state: { yaml: detail.yaml } })
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to use template')
       setUsingSlug(null)
@@ -201,7 +184,7 @@ const CategoryPill: React.FC<{
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.04em',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
       }}
     >
       {label}
@@ -231,19 +214,10 @@ const TemplateCard: React.FC<{
         borderRadius: 8,
         fontFamily: fonts.mono,
         overflow: 'hidden',
-        transition: 'border-color 0.15s',
+        transition: 'border-color 0.12s',
       }}
     >
-      <div
-        style={{
-          height: 120,
-          flexShrink: 0,
-          background: colors.background,
-          borderBottom: `1px solid ${colors.border}`,
-        }}
-      >
-        <MiniDots color={accent} />
-      </div>
+      <CardThumbnail accent={accent} height={120} />
 
       <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div
@@ -291,7 +265,7 @@ const TemplateCard: React.FC<{
                 key={tag}
                 style={{
                   padding: '1px 7px',
-                  background: 'rgba(0, 229, 255, 0.06)',
+                  background: 'rgba(255, 152, 0, 0.06)',
                   border: `1px solid ${colors.border}`,
                   borderRadius: 10,
                   color: colors.textSecondary,
@@ -353,7 +327,7 @@ const CardButton: React.FC<{
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.04em',
-        transition: 'all 0.15s',
+        transition: 'all 0.12s',
         opacity: disabled ? 0.5 : 1,
       }}
     >

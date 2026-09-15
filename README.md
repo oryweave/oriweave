@@ -1,4 +1,4 @@
-# stackdoc
+# oriweave
 
 Document your homelab as YAML. Render it as a live topology.
 
@@ -23,9 +23,9 @@ Document your homelab as YAML. Render it as a live topology.
 
 ## About the Project
 
-![Homelab StackDoc Screenshot](.github/assets/homelab-topology-screenshot.png)
+![Oriweave Screenshot](.github/assets/homelab-topology-screenshot.png)
 
-stackdoc turns a YAML description of your network and devices into an interactive topology diagram. The diagram updates as you edit.
+oriweave turns a YAML description of your network and devices into an interactive topology diagram. The diagram updates as you edit.
 Configs are plain text — version them, fork them, share them with a link.
 
 It's built for the kind of person who'd rather write `pve-1.ip: 10.0.10.11` than drag a router icon across a Lucidchart canvas. The
@@ -34,23 +34,23 @@ schema is small. The renderer handles layout. You handle accuracy.
 Drawing tools (Lucidchart, draw.io, Excalidraw) put pixels on a canvas. That works for a sketch, but the canvas isn't a description
 of your infrastructure — it's a picture. Picture and reality drift the moment you spin up a new VM.
 
-stackdoc inverts the relationship. The YAML *is* the description. The diagram is generated from it. Update the YAML when reality changes;
+oriweave inverts the relationship. The YAML *is* the description. The diagram is generated from it. Update the YAML when reality changes;
 the diagram updates with it. The file lives in version control next to the rest of your homelab config.
 
 This is the same logic that won out for documenting APIs (OpenAPI), infrastructure (Terraform), and CI pipelines (GitHub Actions). It
 applies just as well to the topology of your basement rack.
 
-A hosted instance is running at **<https://stackdoc.kazuki.uk>**. Sign in with GitHub to save configs, or use it anonymously to sketch.
+A hosted instance is running at **<https://oriweave.dev>**. Sign in with GitHub to save configs, or use it anonymously to sketch.
 No registration, no email, no friction. If you'd rather run it yourself, see [Installation & Development](#installation--development) below.
 
 ## Project Status
 
-[![CI](https://github.com/thatkazuk1/infra-stackdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/thatkazuk1/infra-stackdoc/actions/workflows/ci.yml)
-[![Release](https://github.com/thatkazuk1/infra-stackdoc/actions/workflows/release-please.yml/badge.svg)](https://github.com/thatkazuk1/infra-stackdoc/actions/workflows/release-please.yml)
+[![CI](https://github.com/oryweave/oriweave/actions/workflows/ci.yml/badge.svg)](https://github.com/oryweave/oriweave/actions/workflows/ci.yml)
+[![Release](https://github.com/oryweave/oriweave/actions/workflows/release-please.yml/badge.svg)](https://github.com/oryweave/oriweave/actions/workflows/release-please.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Actively developed, and running a real hosted instance. `develop` is the default branch and deploys continuously to a dev environment; `master`
-is the release-gated branch that deploys the production instance at stackdoc.kazuki.uk. See [Contributing](#contributing) for the branch model.
+is the release-gated branch that deploys the production instance at oriweave.dev. See [Contributing](#contributing) for the branch model.
 
 ## Features
 
@@ -69,11 +69,11 @@ is the release-gated branch that deploys the production instance at stackdoc.kaz
 ## Schema Reference
 
 The full schema lives in [`packages/core/src/types.ts`](packages/core/src/types.ts) and is documented in full — every top-level section, plus a
-worked example — in the [Schema Reference docs](https://stackdoc-docs.kazuki.uk/schema-reference).
+worked example — in the [Schema Reference docs](https://docs.oriweave.dev/schema-reference).
 
 ## Architecture
 
-stackdoc is a pnpm monorepo with strict layer boundaries.
+oriweave is a pnpm monorepo with strict layer boundaries.
 
 ```
 packages/
@@ -99,13 +99,13 @@ or container health into the rendered LED is planned but not started.
 - **No in-editor YAML autocomplete or schema squiggles.** Errors appear in the status bar with paths, but the editor doesn't yet surface them inline.
 - **The layout engine isn't perfect.** Large topologies with many cross-cluster connections can produce edge crossings that a hand-drawn layout would avoid.
 
-Track these (and propose more) on the [issues page](https://github.com/thatkazuk1/infra-stackdoc/issues).
+Track these (and propose more) on the [issues page](https://github.com/oryweave/oriweave/issues).
 
 ## Getting Started
 
 ### Dependencies
 
-To run stackdoc locally:
+To run oriweave locally:
 
 - **`git`** — to clone the repo.
 - **Node.js `24`** (pinned in `.nvmrc`, matches CI and the Docker build; `packages/core`'s test suite hits a `node:util` incompatibility on Node 20.12 and needs 24 to run).
@@ -126,27 +126,27 @@ To run stackdoc locally:
 ### Third-party Services
 
 - **GitHub** — OAuth sign-in for saved configs; canonical forge and CI.
-- **Coolify** — hosts the production instance at stackdoc.kazuki.uk, auto-deploying from `master`.
+- **Coolify** — hosts the production instance at oriweave.dev, auto-deploying from `master`.
 - **Cloudflare** — DNS/edge in front of the public hostname.
 
 ## Installation & Development
 
 ```bash
-git clone https://github.com/thatkazuk1/infra-stackdoc.git
-cd infra-stackdoc
+git clone https://github.com/oryweave/oriweave.git
+cd oriweave
 make install        # pnpm install across the workspace
 make infra          # start Postgres in Docker (one container)
 make dev            # start web (5173) and api (8087) in parallel
 ```
 
-Open <http://stackdoc.localhost:5173> (not plain `localhost` — the api's CORS/OAuth config is pinned to the `stackdoc.localhost` origin by default; `.localhost` resolves
+Open <http://oriweave.localhost:5173> (not plain `localhost` — the api's CORS/OAuth config is pinned to the `oriweave.localhost` origin by default; `.localhost` resolves
 to loopback with no extra setup).
 
-Full setup detail, testing commands, and the Node-version gotcha are in the [Installation & Development docs](https://stackdoc-docs.kazuki.uk/installation).
+Full setup detail, testing commands, and the Node-version gotcha are in the [Installation & Development docs](https://docs.oriweave.dev/installation).
 
 ## How to Get Help
 
-Open an [issue](https://github.com/thatkazuk1/infra-stackdoc/issues) for bugs, questions, or feature requests. There's no dedicated support channel or SLA — this is a
+Open an [issue](https://github.com/oryweave/oriweave/issues) for bugs, questions, or feature requests. There's no dedicated support channel or SLA — this is a
 small project with a single maintainer, checked periodically rather than continuously.
 
 ## Contributing

@@ -4,6 +4,15 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { config } from '@/common/config'
 
+const originalEmitWarning = process.emitWarning.bind(process)
+process.emitWarning = ((warning: string | Error, ...rest: unknown[]) => {
+  const message = typeof warning === 'string' ? warning : warning.message
+  if (message.includes('client.query() when the client is already executing a query')) {
+    return
+  }
+  return (originalEmitWarning as (...args: unknown[]) => void)(warning, ...rest)
+}) as typeof process.emitWarning
+
 const logger = new Logger('Server')
 
 async function bootstrap() {

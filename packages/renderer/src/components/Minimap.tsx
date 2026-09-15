@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { colors, fonts, deviceAccent } from '../theme'
-import type { PositionedGraph } from '@homelab-stackdoc/core'
+import type { PositionedGraph } from '@oriweave/core'
 
 interface MinimapProps {
   graph: PositionedGraph
@@ -151,18 +151,15 @@ export const Minimap: React.FC<MinimapProps> = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
       style={{
-        position: 'absolute',
-        right: 16,
-        bottom: 16,
         width: MINIMAP_W,
         height: MINIMAP_H,
+        flexShrink: 0,
         background: colors.backgroundSubtle,
         border: `1px solid ${colors.borderHover}`,
         borderRadius: 4,
         opacity,
-        transition: 'opacity 0.2s',
+        transition: 'opacity 0.18s',
         cursor: dragging ? 'grabbing' : 'crosshair',
-        zIndex: 10,
         pointerEvents: 'auto',
         fontFamily: fonts.mono,
       }}
