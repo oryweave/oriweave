@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0](https://github.com/oryweave/oriweave/compare/v0.7.0...v0.8.0) (2026-09-15)
+
+
+### Features
+
+* add cached GitHub stats endpoint with nav badge ([75d6ed9](https://github.com/oryweave/oriweave/commit/75d6ed9a9ccefc46ee260af79317c2fe37526cda))
+* add editor keyboard shortcuts ([#99](https://github.com/oryweave/oriweave/issues/99)) ([8213744](https://github.com/oryweave/oriweave/commit/8213744486a15d90e030762e1079cfd5962a1413))
+* add indent-rainbow style depth coloring to the YAML editor ([#102](https://github.com/oryweave/oriweave/issues/102)) ([378233c](https://github.com/oryweave/oriweave/commit/378233c2a2d724438f931943e98a56812f0ba1a0))
+* add inline squiggly-underline error markers to the YAML editor ([#101](https://github.com/oryweave/oriweave/issues/101)) ([d02857b](https://github.com/oryweave/oriweave/commit/d02857b7969503a4dd2cd2394605c2aa2e288110))
+* add real favicon from oriweave design system ([#92](https://github.com/oryweave/oriweave/issues/92)) ([5542784](https://github.com/oryweave/oriweave/commit/55427847421efafe0258ebecdadf8f04a23b7076))
+* add schema-aware autocompletion to the YAML editor ([#103](https://github.com/oryweave/oriweave/issues/103)) ([2485107](https://github.com/oryweave/oriweave/commit/24851072c689a6856fab3cbdc31b05f0654418df))
+* bring the app in line with the oriweave UI kit design ([#96](https://github.com/oryweave/oriweave/issues/96)) ([62f5c82](https://github.com/oryweave/oriweave/commit/62f5c825e4228d337aeed8fc526486a720e6d47a))
+* integrate the real Logomark, environment ribbon, and landing page CTA cleanup ([#95](https://github.com/oryweave/oriweave/issues/95)) ([ec3c87a](https://github.com/oryweave/oriweave/commit/ec3c87ab1d39449319396631fe2bf1c0e86a351a))
+* move ticket to In Progress on PR open, link PR on transition ([#88](https://github.com/oryweave/oriweave/issues/88)) ([2373eb3](https://github.com/oryweave/oriweave/commit/2373eb34903d14fbb41cf078c84ace6bcb5f5283))
+* paginate GET /configs/user/me and drop yaml/id/forkOf from its list DTO ([#97](https://github.com/oryweave/oriweave/issues/97)) ([acaf96b](https://github.com/oryweave/oriweave/commit/acaf96b509cc5c170c9f71e30f962bb7caeaff29))
+
+
+### Bug Fixes
+
+* align color and typography tokens to real oriweave brand system ([#93](https://github.com/oryweave/oriweave/issues/93)) ([da8f82d](https://github.com/oryweave/oriweave/commit/da8f82d2c75e38e3e39ca6e0596c2190adc902d2))
+* normalize transition durations to the oriweave motion tokens ([cb2e6e1](https://github.com/oryweave/oriweave/commit/cb2e6e1af87d3b3779132ef16aa9fba268e88895))
+* pre-v1.0 stability and UX fixes across configs and sharing ([#98](https://github.com/oryweave/oriweave/issues/98)) ([9ac486f](https://github.com/oryweave/oriweave/commit/9ac486f6a5286d5c63649b5ca8fdd4c7c5789490))
+* reference plane-transition by git tag, not image digest ([#84](https://github.com/oryweave/oriweave/issues/84)) ([680f505](https://github.com/oryweave/oriweave/commit/680f5057ea0830ce23f292599494c98aa313d07a))
+* refuse to silently sign JWTs with the public default secret ([#104](https://github.com/oryweave/oriweave/issues/104)) ([a7aae58](https://github.com/oryweave/oriweave/commit/a7aae58e9c8c17c1f1e59a5d4ac67e36bdfa20b6))
+* stop persisting a config when a template is merely previewed ([#100](https://github.com/oryweave/oriweave/issues/100)) ([cdb3df2](https://github.com/oryweave/oriweave/commit/cdb3df2450911b891d838e6c08cf9f157dce3e21))
+* track plane-transition's floating v1 tag ([#86](https://github.com/oryweave/oriweave/issues/86)) ([90e14a0](https://github.com/oryweave/oriweave/commit/90e14a0648fdea5f51d9474995832a78bad6b1f8))
+
+
+### Documentation
+
+* note live verification of plane-sync workflow ([#83](https://github.com/oryweave/oriweave/issues/83)) ([50c8a9a](https://github.com/oryweave/oriweave/commit/50c8a9af30e6072bbc57321168a6efed66e79d53))
+* note live verification of plane-sync workflow (v1.0.1) ([#85](https://github.com/oryweave/oriweave/issues/85)) ([e612c2f](https://github.com/oryweave/oriweave/commit/e612c2f7bb7beae1df587cfe1de7b97c441a1b76))
+* note live verification of plane-sync workflow (v1.0.3) ([#87](https://github.com/oryweave/oriweave/issues/87)) ([e48e3f0](https://github.com/oryweave/oriweave/commit/e48e3f0547dd45740af1a284ac793b9db517ead6))
+* note live verification of start-on-open and PR-linking ([#89](https://github.com/oryweave/oriweave/issues/89)) ([99b325e](https://github.com/oryweave/oriweave/commit/99b325ecc77f1bd85737f04e35b7d8895a94b680))
+* reorganize docs/docs into docs/concepts ([#90](https://github.com/oryweave/oriweave/issues/90)) ([2c91746](https://github.com/oryweave/oriweave/commit/2c917467c1238afa84d5ba5c40e5ea5cc3969d39))
+
 ## [0.7.0](https://github.com/thatkazuk1/infra-stackdoc/compare/v0.6.0...v0.7.0) (2026-08-18)
 
 
