@@ -27,6 +27,28 @@ class EnvManager {
     return envVal
   }
 
+  // For secrets whose "convenience default" is a known, public placeholder (it's
+  // sitting in this public repo) — JWT_SECRET, DATABASE_URL, GITHUB_CLIENT_SECRET.
+  // A blank env var (unset, or set-but-empty — the exact Coolify "Preview
+  // Deployment" trap documented in CLAUDE.md) must never silently resolve to that
+  // placeholder outside local/development, or a misconfigured prod deploy signs
+  // JWTs with a secret anyone can read from GitHub. Local/development still fall
+  // back to devDefault so `make dev` keeps booting with zero .env, per this repo's
+  // documented convention.
+  getSecret(key: string, devDefault: string): string {
+    const raw = this.env[key]
+    if (raw !== undefined && raw !== '') return raw
+
+    const nodeEnv = this.env.NODE_ENV
+    if (nodeEnv !== Environment.STAGING && nodeEnv !== Environment.PRODUCTION) {
+      return devDefault
+    }
+
+    throw new Error(
+      `Env variable "${key}" is blank in ${nodeEnv} — refusing to fall back to its local-dev default.`,
+    )
+  }
+
   checkEnv() {
     const rules = {
       NODE_ENV: str({
@@ -41,6 +63,7 @@ class EnvManager {
 
 const envManager = EnvManager.getInstance()
 const getEnvironmentValue = envManager.getValue.bind(envManager)
+const getSecretValue = envManager.getSecret.bind(envManager)
 const checkEnvironment = envManager.checkEnv.bind(envManager)
 
-export { getEnvironmentValue, checkEnvironment }
+export { getEnvironmentValue, getSecretValue, checkEnvironment }
