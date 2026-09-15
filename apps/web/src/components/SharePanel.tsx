@@ -436,7 +436,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
               </svg>
             }
             label={isExporting ? 'Exporting...' : 'Export as PNG'}
-            sublabel="High-res image for Reddit"
+            sublabel="High-res image for Reddit · Ctrl+Shift+P"
           />
 
           <ActionButton
