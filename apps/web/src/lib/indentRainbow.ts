@@ -8,14 +8,7 @@ import {
 } from '@codemirror/view'
 import { colors } from '@oriweave/renderer'
 
-// Matches EditorState.tabSize.of(2) in CodeMirrorEditor.tsx and the 2-space
-// convention every YAML sample/template in this repo already uses.
 const INDENT_UNIT = 2
-
-// Cycling background tint per indent depth, oderwat.indent-rainbow style.
-// Deliberately skips colors.red — that's now the inline validation-error
-// squiggle color (see errorPositions.ts), and a red indent tint next to a red
-// error underline would read as "this line has an error" when it doesn't.
 const RAINBOW_COLORS = [colors.primary, colors.networkAccent, colors.green, colors.purple]
 
 const levelMarks = RAINBOW_COLORS.map((hex) =>

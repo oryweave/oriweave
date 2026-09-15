@@ -9,10 +9,6 @@ import { DEVICE_TYPES, CONNECTION_TYPES } from '@oriweave/core'
 const DEVICE_TYPE_OPTIONS = DEVICE_TYPES.map((type) => ({ label: type, type: 'keyword' }))
 const CONNECTION_TYPE_OPTIONS = CONNECTION_TYPES.map((type) => ({ label: type, type: 'keyword' }))
 
-// Which top-level section (devices/connections/networks/...) the cursor's line
-// falls under, found by walking up to the nearest column-0 `key:` line. Doesn't
-// require the document to be valid YAML at every keystroke — unlike a full CST
-// lookup, this only needs *earlier* lines to still look like YAML.
 function enclosingTopLevelKey(context: CompletionContext): string | null {
   const { state, pos } = context
   const cursorLine = state.doc.lineAt(pos).number
@@ -23,8 +19,6 @@ function enclosingTopLevelKey(context: CompletionContext): string | null {
   return null
 }
 
-// Second, editor-only parse of the live buffer (same pattern as errorPositions.ts)
-// purely to collect known device ids for connections[].from/to completion.
 function collectDeviceIds(yamlText: string): string[] {
   let doc: ReturnType<typeof parseDocument>
   try {
