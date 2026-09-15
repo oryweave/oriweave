@@ -33,6 +33,13 @@ export interface Group {
   style?: 'dashed' | 'solid' | 'none'
   color?: string
   parent?: string
+  /**
+   * Set on groups synthesized by the layout engine's auto-clustering pass
+   * (see `layout.ts`) for a large fan-out the author didn't group
+   * themselves — never present on an author-declared group from the YAML.
+   * The renderer uses this to start such groups collapsed by default.
+   */
+  synthetic?: boolean
 }
 
 export interface Device {
@@ -241,6 +248,16 @@ export interface LayoutOptions {
   horizontalSpacing?: number
   verticalSpacing?: number
   groupPadding?: number
+  /**
+   * Total top-level device count below which the auto-clustering pass is a
+   * complete no-op — small graphs render exactly as before this feature.
+   */
+  autoClusterMinGraphSize?: number
+  /**
+   * Minimum number of ungrouped, leaf, sibling devices fanning out from the
+   * same parent before they're synthesized into a collapsed auto-cluster.
+   */
+  autoClusterFanoutThreshold?: number
 }
 
 export const DEFAULT_LAYOUT_OPTIONS: Required<LayoutOptions> = {
@@ -249,4 +266,6 @@ export const DEFAULT_LAYOUT_OPTIONS: Required<LayoutOptions> = {
   horizontalSpacing: 50,
   verticalSpacing: 80,
   groupPadding: 40,
+  autoClusterMinGraphSize: 25,
+  autoClusterFanoutThreshold: 6,
 }

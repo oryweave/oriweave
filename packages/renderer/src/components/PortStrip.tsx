@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { colors, fonts } from '../theme'
 import type { DeviceInterfaces } from '@oriweave/core'
 import type { PortAssignment, EnumeratedPort } from '@oriweave/core'
+import { getEthernetPortsPerRow, needsSecondaryPortRow } from '@oriweave/core'
 
 interface PortStripProps {
   interfaces: DeviceInterfaces
@@ -306,162 +307,176 @@ export const PortStrip: React.FC<PortStripProps> = ({
   // renders in index order, so it doesn't need a similar flag.)
   const ethHasLabels = Array.from(labelLookup.keys()).some((k) => k.startsWith('ethernet:'))
 
+  // When ethernet's own row is wide (many ports), there may be no room
+  // left for SFP/WiFi beside it — they drop to a row of their own instead
+  // of overflowing the card. `needsSecondaryPortRow` is the same
+  // computation the layout engine uses to reserve height for that row, so
+  // the two can't disagree about whether it happens.
+  const secondaryOnOwnRow = needsSecondaryPortRow(ethCount, sfpCount, hasWifi, cardWidth)
+
+  const ethernetBlock =
+    ethCount > 0 &&
+    (() => {
+      const maxPerRow = getEthernetPortsPerRow(cardWidth)
+      const maxRows = 2
+      const maxVisible = maxPerRow * maxRows
+
+      // When labels exist, declared order is load-bearing — render
+      // in index order so ports[0] (e.g. WAN) stays leftmost.
+      // Otherwise, the existing active-first sort improves the
+      // density of idle anonymous strips.
+      const allPorts = Array.from({ length: ethCount }, (_, i) => {
+        const assignment = ethAssignments.find((a) => a.portIndex === i)
+        return { index: i, assignment }
+      })
+
+      const sorted = ethHasLabels
+        ? allPorts
+        : [...allPorts.filter((p) => p.assignment), ...allPorts.filter((p) => !p.assignment)]
+      const visible = sorted.slice(0, maxVisible)
+      const hiddenCount = sorted.length - visible.length
+
+      // Split into rows
+      const rows: (typeof visible)[] = []
+      for (let i = 0; i < visible.length; i += maxPerRow) {
+        rows.push(visible.slice(i, i + maxPerRow))
+      }
+
+      return (
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {rows.map((row, ri) => (
+              <div key={ri} style={{ display: 'flex', gap: PORT_GAP, alignItems: 'flex-start' }}>
+                {row.map((p) => (
+                  <RJ45Port
+                    key={`eth-${p.index}`}
+                    index={p.index}
+                    active={!!p.assignment}
+                    connectedTo={p.assignment?.connectedTo}
+                    speed={p.assignment?.speed}
+                    label={labelLookup.get(`ethernet:${p.index}`)}
+                    onHover={onPortHover}
+                  />
+                ))}
+                {/* Overflow badge on the last row */}
+                {ri === rows.length - 1 && hiddenCount > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: PORT_H,
+                      paddingLeft: 4,
+                      fontSize: 8,
+                      color: colors.textMuted,
+                      fontFamily: fonts.mono,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    +{hiddenCount}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              fontSize: 7,
+              color: colors.textMuted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginTop: 2,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <span>
+              {interfaces.ethernet?.speed ? `${interfaces.ethernet.speed} ETH` : 'ETHERNET'}
+            </span>
+            <span style={{ color: colors.textMuted, opacity: 0.5 }}>
+              {ethAssignments.length}/{ethCount} active
+            </span>
+          </div>
+        </div>
+      )
+    })()
+
+  const sfpBlock = sfpCount > 0 && (
+    <div>
+      <div style={{ display: 'flex', gap: PORT_GAP }}>
+        {Array.from({ length: sfpCount }, (_, i) => {
+          const assignment = sfpAssignments.find((a) => a.portIndex === i)
+          return (
+            <RJ45Port
+              key={`sfp-${i}`}
+              index={i}
+              active={!!assignment}
+              connectedTo={assignment?.connectedTo}
+              speed={assignment?.speed}
+              label={labelLookup.get(`sfp:${i}`)}
+              onHover={onPortHover}
+            />
+          )
+        })}
+      </div>
+      <div
+        style={{
+          fontSize: 7,
+          color: colors.textMuted,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginTop: 2,
+        }}
+      >
+        {interfaces.sfp?.speed ? `${interfaces.sfp.speed} SFP` : 'SFP'}
+      </div>
+    </div>
+  )
+
+  const wifiBlock = hasWifi && (
+    <div>
+      <WifiIndicator
+        clientCount={wifiAssignments.length}
+        bands={interfaces.wifi?.bands}
+        assignments={wifiAssignments}
+        onHover={onPortHover}
+      />
+      <div
+        style={{
+          fontSize: 7,
+          color: colors.textMuted,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginTop: 2,
+        }}
+      >
+        WIFI
+      </div>
+    </div>
+  )
+
+  const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'flex-start', gap: 14 }
+
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: 14,
+        flexDirection: 'column',
+        gap: 6,
         paddingTop: 5,
         borderTop: `1px solid ${colors.border}`,
       }}
     >
-      {/* Ethernet ports */}
-      {ethCount > 0 &&
-        (() => {
-          const usableWidth = cardWidth - 30 // padding + accent bar
-          const portSlotWidth = PORT_W + PORT_GAP
-          const maxPerRow = Math.max(4, Math.floor(usableWidth / portSlotWidth))
-          const maxRows = 2
-          const maxVisible = maxPerRow * maxRows
-
-          // When labels exist, declared order is load-bearing — render
-          // in index order so ports[0] (e.g. WAN) stays leftmost.
-          // Otherwise, the existing active-first sort improves the
-          // density of idle anonymous strips.
-          const allPorts = Array.from({ length: ethCount }, (_, i) => {
-            const assignment = ethAssignments.find((a) => a.portIndex === i)
-            return { index: i, assignment }
-          })
-
-          const sorted = ethHasLabels
-            ? allPorts
-            : [...allPorts.filter((p) => p.assignment), ...allPorts.filter((p) => !p.assignment)]
-          const visible = sorted.slice(0, maxVisible)
-          const hiddenCount = sorted.length - visible.length
-
-          // Split into rows
-          const rows: (typeof visible)[] = []
-          for (let i = 0; i < visible.length; i += maxPerRow) {
-            rows.push(visible.slice(i, i + maxPerRow))
-          }
-
-          return (
-            <div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {rows.map((row, ri) => (
-                  <div
-                    key={ri}
-                    style={{ display: 'flex', gap: PORT_GAP, alignItems: 'flex-start' }}
-                  >
-                    {row.map((p) => (
-                      <RJ45Port
-                        key={`eth-${p.index}`}
-                        index={p.index}
-                        active={!!p.assignment}
-                        connectedTo={p.assignment?.connectedTo}
-                        speed={p.assignment?.speed}
-                        label={labelLookup.get(`ethernet:${p.index}`)}
-                        onHover={onPortHover}
-                      />
-                    ))}
-                    {/* Overflow badge on the last row */}
-                    {ri === rows.length - 1 && hiddenCount > 0 && (
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          height: PORT_H,
-                          paddingLeft: 4,
-                          fontSize: 8,
-                          color: colors.textMuted,
-                          fontFamily: fonts.mono,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        +{hiddenCount}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div
-                style={{
-                  fontSize: 7,
-                  color: colors.textMuted,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  marginTop: 2,
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'center',
-                }}
-              >
-                <span>
-                  {interfaces.ethernet?.speed ? `${interfaces.ethernet.speed} ETH` : 'ETHERNET'}
-                </span>
-                <span style={{ color: colors.textMuted, opacity: 0.5 }}>
-                  {ethAssignments.length}/{ethCount} active
-                </span>
-              </div>
-            </div>
-          )
-        })()}
-
-      {/* SFP ports */}
-      {sfpCount > 0 && (
-        <div>
-          <div style={{ display: 'flex', gap: PORT_GAP }}>
-            {Array.from({ length: sfpCount }, (_, i) => {
-              const assignment = sfpAssignments.find((a) => a.portIndex === i)
-              return (
-                <RJ45Port
-                  key={`sfp-${i}`}
-                  index={i}
-                  active={!!assignment}
-                  connectedTo={assignment?.connectedTo}
-                  speed={assignment?.speed}
-                  label={labelLookup.get(`sfp:${i}`)}
-                  onHover={onPortHover}
-                />
-              )
-            })}
-          </div>
-          <div
-            style={{
-              fontSize: 7,
-              color: colors.textMuted,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginTop: 2,
-            }}
-          >
-            {interfaces.sfp?.speed ? `${interfaces.sfp.speed} SFP` : 'SFP'}
-          </div>
-        </div>
-      )}
-
-      {/* WiFi indicator */}
-      {hasWifi && (
-        <div>
-          <WifiIndicator
-            clientCount={wifiAssignments.length}
-            bands={interfaces.wifi?.bands}
-            assignments={wifiAssignments}
-            onHover={onPortHover}
-          />
-          <div
-            style={{
-              fontSize: 7,
-              color: colors.textMuted,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginTop: 2,
-            }}
-          >
-            WIFI
-          </div>
+      <div style={rowStyle}>
+        {ethernetBlock}
+        {!secondaryOnOwnRow && sfpBlock}
+        {!secondaryOnOwnRow && wifiBlock}
+      </div>
+      {secondaryOnOwnRow && (
+        <div style={rowStyle}>
+          {sfpBlock}
+          {wifiBlock}
         </div>
       )}
     </div>

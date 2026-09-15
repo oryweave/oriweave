@@ -41,6 +41,82 @@ const PORT_DIMENSIONS = {
 } as const
 
 /**
+ * Height of a single rendered ethernet port row (icon + caption), and the
+ * horizontal padding/slot math the ethernet strip wraps at. These mirror
+ * PortStrip.tsx's own rendering constants (icon 18×16, 3px gap, 30px of
+ * card padding) so the row-count computation below — consumed by both the
+ * layout engine (card height) and the renderer (actual wrapping) — can
+ * never drift out of sync between the two.
+ */
+const ETH_ROW_HEIGHT = 24
+const ETH_PORT_SLOT_WIDTH = 21
+const ETH_STRIP_HORIZONTAL_PADDING = 30
+const ETH_MIN_PORTS_PER_ROW = 4
+const ETH_MAX_ROWS = 2
+
+/**
+ * Width budget for the strip row's flex gap and the WiFi indicator block —
+ * mirrors PortStrip.tsx's row `gap` and the WifiIndicator's rendered width
+ * (icon + client-count text), used only to decide whether SFP/WiFi fit
+ * beside ethernet on the same row.
+ */
+const PORT_STRIP_ROW_GAP = 14
+const WIFI_BLOCK_WIDTH = 40
+
+/**
+ * How many ethernet ports fit on a single row at the given card width.
+ * Single source of truth for both `getEthernetRowCount` below and
+ * PortStrip's actual row-splitting, so they can't drift apart.
+ */
+function getEthernetPortsPerRow(cardWidth: number): number {
+  const usableWidth = cardWidth - ETH_STRIP_HORIZONTAL_PADDING
+  return Math.max(ETH_MIN_PORTS_PER_ROW, Math.floor(usableWidth / ETH_PORT_SLOT_WIDTH))
+}
+
+/**
+ * How many rows the ethernet port strip needs for a given port count and
+ * card width, capped at `ETH_MAX_ROWS` (ports beyond that overflow into the
+ * renderer's existing "+N" badge rather than growing the card further).
+ * Single source of truth for both the layout engine's card-height
+ * computation and PortStrip's actual row wrapping.
+ */
+function getEthernetRowCount(ethCount: number, cardWidth: number): number {
+  if (ethCount <= 0) return 0
+  const maxPerRow = getEthernetPortsPerRow(cardWidth)
+  return Math.min(ETH_MAX_ROWS, Math.ceil(ethCount / maxPerRow))
+}
+
+/**
+ * Whether the SFP/WiFi block needs to drop onto its own row below ethernet
+ * instead of sharing ethernet's row. Ethernet's own row already fits within
+ * the card by construction (`getEthernetRowCount` caps it) — the problem is
+ * that a wide ethernet row (many ports) can leave no horizontal room for
+ * SFP/WiFi beside it, so they'd render past the card's right edge. Single
+ * source of truth for both the layout engine's card-height computation and
+ * PortStrip's actual row placement.
+ *
+ * Scoped to the ethernet-vs-others contention that's actually been seen in
+ * practice (a high ethernet count crowding out a modest SFP count); an SFP
+ * or WiFi-only device with an unusually wide SFP strip of its own is a
+ * separate, still out-of-scope case (SFP never wraps within its own row).
+ */
+function needsSecondaryPortRow(
+  ethCount: number,
+  sfpCount: number,
+  hasWifi: boolean,
+  cardWidth: number,
+): boolean {
+  if (ethCount <= 0 || (sfpCount <= 0 && !hasWifi)) return false
+
+  const ethBlockWidth = Math.min(ethCount, getEthernetPortsPerRow(cardWidth)) * ETH_PORT_SLOT_WIDTH
+  const secondaryWidth =
+    sfpCount * ETH_PORT_SLOT_WIDTH + (hasWifi ? WIFI_BLOCK_WIDTH + PORT_STRIP_ROW_GAP : 0)
+  const usableWidth = cardWidth - ETH_STRIP_HORIZONTAL_PADDING
+
+  return ethBlockWidth + PORT_STRIP_ROW_GAP + secondaryWidth > usableWidth
+}
+
+/**
  * Computes which port on each device each connection uses.
  *
  * Two-pass algorithm (Phase 2c):
@@ -409,6 +485,7 @@ function resolvePortReference(device: Device, label: string, connType?: string):
 
 export {
   PORT_DIMENSIONS,
+  ETH_ROW_HEIGHT,
   EnumerableInterfaceType,
   EnumeratedPort,
   PortAssignment,
@@ -416,6 +493,9 @@ export {
   PortResolution,
   assignPorts,
   enumeratePorts,
+  getEthernetRowCount,
+  getEthernetPortsPerRow,
+  needsSecondaryPortRow,
   getPortX,
   getPortStripY,
   getInterfaceGroup,

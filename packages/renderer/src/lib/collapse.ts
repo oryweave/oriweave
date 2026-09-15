@@ -97,6 +97,16 @@ export function buildDeviceToCollapsedGroupMap(
 }
 
 /**
+ * Returns the ids of groups the layout engine auto-synthesized for a large,
+ * ungrouped fan-out (`Group.synthetic`, see `core/layout.ts`). Used to seed
+ * `collapsedGroupIds` so these start collapsed by default — unlike
+ * author-defined groups, which start expanded.
+ */
+export function selectAutoCollapsedGroupIds(groups: readonly Group[]): Set<string> {
+  return new Set(groups.filter((g) => g.synthetic).map((g) => g.id))
+}
+
+/**
  * Returns the centre point of a group's bounding box as the position
  * where its supernode renders. The puck size is added by the caller;
  * this returns the *centre*, not the top-left.

@@ -29,6 +29,10 @@ export {
 export {
   enumeratePorts,
   resolvePortReference,
+  getEthernetRowCount,
+  getEthernetPortsPerRow,
+  needsSecondaryPortRow,
+  ETH_ROW_HEIGHT,
   type EnumeratedPort,
   type EnumerableInterfaceType,
   type PortAssignment,
