@@ -21,6 +21,7 @@ import { tags } from '@lezer/highlight'
 import { yaml } from '@codemirror/lang-yaml'
 import type { ValidationError } from '@oriweave/core'
 import { colors, fonts } from '@oriweave/renderer'
+import { indentRainbow } from '../lib/indentRainbow'
 import { resolveErrorPositions } from '../lib/errorPositions'
 
 interface CodeMirrorEditorProps {
@@ -181,6 +182,7 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         }),
         lintGutter(),
         yaml(),
+        indentRainbow,
         syntaxHighlighting(highlightColors),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
         theme,
