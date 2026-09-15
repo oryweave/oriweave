@@ -4,13 +4,6 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { config } from '@/common/config'
 
-// TypeORM's synchronize() (local/dev only — see CLAUDE.md's Schema management note;
-// it's off in staging/production) drops stale indices via Promise.all() over a single
-// shared QueryRunner/pg Client (RdbmsSchemaBuilder.dropOldIndices). That triggers pg's
-// same-client-concurrent-query deprecation warning on any restart with an index diff to
-// apply — upstream TypeORM behavior, not a bug in this app (confirmed: no raw `.query()`
-// calls or unawaited concurrent queries anywhere in apps/api/src). Filtered narrowly by
-// message text so any other warning still surfaces normally.
 const originalEmitWarning = process.emitWarning.bind(process)
 process.emitWarning = ((warning: string | Error, ...rest: unknown[]) => {
   const message = typeof warning === 'string' ? warning : warning.message

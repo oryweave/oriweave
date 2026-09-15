@@ -14,21 +14,12 @@ interface AppNavProps {
   primaryAction?: React.ReactNode
 }
 
-// Fixed per-environment tag colors — the design hardcodes these (Shell.jsx's own EnvRibbon
-// literally writes '#26C6DA' for dev, not var(--primary)), independent of whatever the UI
-// accent is. colors.networkAccent holds that same value under its own name; referencing it
-// here instead of a fresh literal keeps this in sync with the one other place it matters
-// (the canvas's own device/link colors) without re-coupling it to colors.primary.
 const ENV_RIBBON_COLOR: Record<string, string> = {
   local: '#FB923C',
   dev: colors.networkAccent,
   stg: '#A855F7',
 }
 
-// Deploy-environment tag raised as an EXPONENT on the lockup — a small superscript notched onto
-// the mark's top-right, like `oriweaveᵉⁿᵛ`. Renders the bare lockup in production. Matches the
-// design's current `Shell.jsx` spec exactly (re-pulled — this superseded an earlier "plate behind
-// the logo" attempt that was guessed before checking the live source).
 const EnvRibbon: React.FC<{ env: string | undefined; children: React.ReactNode }> = ({
   env,
   children,
