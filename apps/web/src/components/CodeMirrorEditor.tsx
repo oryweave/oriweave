@@ -8,7 +8,7 @@ import {
   highlightActiveLine,
   highlightActiveLineGutter,
 } from '@codemirror/view'
-import { lintGutter } from '@codemirror/lint'
+import { lintGutter, linter, forceLinting, type Diagnostic } from '@codemirror/lint'
 import React, { useRef, useEffect } from 'react'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import {
@@ -19,13 +19,16 @@ import {
 } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { yaml } from '@codemirror/lang-yaml'
+import type { ValidationError } from '@oriweave/core'
 import { colors, fonts } from '@oriweave/renderer'
 import { indentRainbow } from '../lib/indentRainbow'
+import { resolveErrorPositions } from '../lib/errorPositions'
 
 interface CodeMirrorEditorProps {
   value: string
   onChange: (value: string) => void
   onCursorChange?: (line: number) => void
+  errors?: ValidationError[]
 }
 
 const theme = EditorView.theme({
@@ -129,6 +132,7 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
   onCursorChange,
+  errors,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -136,6 +140,8 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   onChangeRef.current = onChange
   const onCursorChangeRef = useRef(onCursorChange)
   onCursorChangeRef.current = onCursorChange
+  const errorsRef = useRef<ValidationError[]>(errors ?? [])
+  errorsRef.current = errors ?? []
 
   // Create editor on mount
   useEffect(() => {
@@ -162,6 +168,18 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         bracketMatching(),
         highlightSelectionMatches(),
         autocompletion(),
+        linter((view): Diagnostic[] => {
+          const currentErrors = errorsRef.current
+          if (currentErrors.length === 0) return []
+          const text = view.state.doc.toString()
+          const positions = resolveErrorPositions(text, currentErrors)
+          return currentErrors.map((error, i) => ({
+            from: positions[i].from,
+            to: positions[i].to,
+            severity: error.severity,
+            message: error.message,
+          }))
+        }),
         lintGutter(),
         yaml(),
         indentRainbow,
@@ -204,6 +222,13 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       })
     }
   }, [value])
+
+  // errorsRef is updated above on every render, but CodeMirror's own linter only
+  // re-runs on doc changes — force a re-lint whenever the errors themselves change
+  // (from parent re-validation) so squiggles never lag behind the error panel/status bar.
+  useEffect(() => {
+    if (viewRef.current) forceLinting(viewRef.current)
+  }, [errors])
 
   return (
     <div

@@ -75,7 +75,12 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
       {/* Editor */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        <CodeMirrorEditor value={value} onChange={onChange} onCursorChange={setCurrentLine} />
+        <CodeMirrorEditor
+          value={value}
+          onChange={onChange}
+          onCursorChange={setCurrentLine}
+          errors={errors}
+        />
       </div>
 
       {/* Error panel */}
