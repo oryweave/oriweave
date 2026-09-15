@@ -12,6 +12,7 @@ import { YamlEditor } from '../components/YamlEditor'
 interface EditorPageProps {
   initialYaml?: string
   editingSlug?: string
+  initialVisibility?: 'public' | 'unlisted'
 }
 
 const toggleButtonStyle: React.CSSProperties = {
@@ -35,7 +36,11 @@ const toggleButtonStyle: React.CSSProperties = {
   transition: `all ${motion.fast}`,
 }
 
-export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug }) => {
+export const EditorPage: React.FC<EditorPageProps> = ({
+  initialYaml,
+  editingSlug,
+  initialVisibility,
+}) => {
   const [yaml, setYaml] = useState(initialYaml || SAMPLE_YAML)
   const [splitRatio, setSplitRatio] = useState(0.27)
   const [resizing, setResizing] = useState(false)
@@ -198,6 +203,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ initialYaml, editingSlug
                 onExportPng={handleExportPng}
                 isExporting={isExporting}
                 editingSlug={editingSlug}
+                initialVisibility={initialVisibility}
               />
             }
           />

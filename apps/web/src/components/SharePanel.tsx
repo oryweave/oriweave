@@ -7,6 +7,7 @@ interface SharePanelProps {
   yaml: string
   isExporting: boolean
   editingSlug?: string
+  initialVisibility?: 'public' | 'unlisted'
   onExportPng: () => void
 }
 
@@ -96,6 +97,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
   onExportPng,
   isExporting,
   editingSlug,
+  initialVisibility,
 }) => {
   const { isLoggedIn } = useAuth()
   const [open, setOpen] = useState(false)
@@ -105,7 +107,14 @@ export const SharePanel: React.FC<SharePanelProps> = ({
   const [justShared, setJustShared] = useState(false)
   const [shareResult, setShareResult] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'unlisted'>(
+    initialVisibility ?? 'unlisted',
+  )
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (initialVisibility) setVisibility(initialVisibility)
+  }, [initialVisibility])
 
   useEffect(() => {
     if (!open) return
@@ -174,8 +183,8 @@ export const SharePanel: React.FC<SharePanelProps> = ({
 
     try {
       const result = editingSlug
-        ? await updateConfig(editingSlug, yaml)
-        : await createConfig(yaml, 'unlisted')
+        ? await updateConfig(editingSlug, yaml, visibility)
+        : await createConfig(yaml, visibility)
       const url = `${window.location.origin}/s/${result.slug}`
 
       await copyToClipboard(url)
@@ -334,6 +343,47 @@ export const SharePanel: React.FC<SharePanelProps> = ({
               ✓ URL copied to clipboard
             </div>
           )}
+
+          <div style={{ ...sectionLabel, marginTop: 4 }}>VISIBILITY</div>
+
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['unlisted', 'public'] as const).map((option) => (
+              <button
+                key={option}
+                onClick={() => setVisibility(option)}
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  background:
+                    visibility === option ? 'rgba(255, 152, 0, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                  border: `1px solid ${visibility === option ? colors.primary : colors.border}`,
+                  borderRadius: 5,
+                  color: visibility === option ? colors.primary : colors.textSecondary,
+                  cursor: 'pointer',
+                  fontFamily: fonts.mono,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: colors.textMuted,
+              paddingLeft: 2,
+              fontFamily: fonts.mono,
+            }}
+          >
+            {visibility === 'public'
+              ? 'Listed in the public gallery'
+              : 'Only visible to people with the link'}
+          </div>
 
           {/* Primary action — share new or update existing */}
           <ActionButton
