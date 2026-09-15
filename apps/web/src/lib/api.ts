@@ -73,20 +73,6 @@ async function forkConfig(slug: string): Promise<CreateConfigResponse> {
   return response.json()
 }
 
-async function createTemplateFromSlug(slug: string): Promise<CreateConfigResponse> {
-  const response = await fetch(`${API_BASE}/templates/${slug}/use`, {
-    ...defaultInit,
-    method: 'POST',
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.message || `Failed to use template (${response.status})`)
-  }
-
-  return response.json()
-}
-
 async function logout(): Promise<void> {
   await fetch(`${API_BASE}/auth/logout`, { ...defaultInit, method: 'POST' })
 }
@@ -245,7 +231,6 @@ export {
   loginUrl,
   createConfig,
   forkConfig,
-  createTemplateFromSlug,
   logout,
   fetchMe,
   fetchConfig,

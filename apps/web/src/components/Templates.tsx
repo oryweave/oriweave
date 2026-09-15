@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { colors as tokenColors, fonts } from '@oriweave/renderer'
-import { ApiError, fetchTemplate, fetchTemplates, createTemplateFromSlug } from '../lib/api'
+import { ApiError, fetchTemplate, fetchTemplates } from '../lib/api'
 import { CardThumbnail } from './CardThumbnail'
 import { FatalError } from './FatalError'
-import { useAuth } from '../context/AuthContext'
 import type { TemplateCategory, TemplateSummary } from '../lib/api.types'
 
 // Local translucent variant of the card surface, for this page's card background.
@@ -40,7 +39,6 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate()
-  const { isLoggedIn } = useAuth()
   const [templates, setTemplates] = useState<TemplateSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fatal, setFatal] = useState<{ status: number | null } | null>(null)
@@ -70,17 +68,13 @@ export const Templates: React.FC = () => {
   const handleUse = async (template: TemplateSummary) => {
     setUsingSlug(template.slug)
     try {
-      if (isLoggedIn) {
-        // Logged-in path: server-side fork creates a new config owned by the
-        // user. Land them on the editor for that config so they can save.
-        const created = await createTemplateFromSlug(template.slug)
-        navigate(`/edit/${created.slug}`)
-      } else {
-        // Anonymous path: don't persist anything yet. Just preload the YAML
-        // into the editor; the user can choose to save (and sign in) later.
-        const detail = await fetchTemplate(template.slug)
-        navigate('/editor', { state: { yaml: detail.yaml } })
-      }
+      // Don't persist anything yet — just preload the template's YAML into a
+      // scratch editor session. Nothing lands in My Configs / the gallery until
+      // the user actually shares/saves it (previously, signed-in users got a
+      // config forked into their account immediately on click, before any edit,
+      // and repeating this for the same template kept creating more of them).
+      const detail = await fetchTemplate(template.slug)
+      navigate('/editor', { state: { yaml: detail.yaml } })
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to use template')
       setUsingSlug(null)
