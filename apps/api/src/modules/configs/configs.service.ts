@@ -181,12 +181,22 @@ export class ConfigsService {
     return { data, total }
   }
 
-  async findByUserId(userId: string): Promise<Config[]> {
-    return this.configRepo.find({
+  async findByUserId(
+    userId: string,
+    params: { page?: number; limit?: number } = {},
+  ): Promise<{ data: Config[]; total: number }> {
+    const page = params.page ?? 1
+    const limit = params.limit ?? 20
+
+    const [data, total] = await this.configRepo.findAndCount({
       where: { userId },
       relations: ['tags'],
       order: { updatedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
+
+    return { data, total }
   }
 
   async update(

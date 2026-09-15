@@ -30,16 +30,18 @@ interface User {
 }
 
 interface MyConfig {
-  id: string
   slug: string
   title: string
-  yaml: string
   visibility: string
   viewCount: number
-  forkOf: string | null
   tags: { tag: string }[]
   createdAt: string
   updatedAt: string
+}
+
+interface MyConfigListResponse {
+  data: MyConfig[]
+  total: number
 }
 
 type TemplateCategory =
@@ -106,6 +108,7 @@ export {
   CreateConfigResponse,
   User,
   MyConfig,
+  MyConfigListResponse,
   TemplateCategory,
   TemplateSummary,
   TemplateDetail,

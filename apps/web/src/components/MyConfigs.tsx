@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { colors as tokenColors, fonts, radii, motion } from '@oriweave/renderer'
-import { ApiError, fetchMyConfigs, deleteConfig } from '../lib/api'
+import { ApiError, fetchMyConfigs, fetchConfig, deleteConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { FatalError } from './FatalError'
 import type { MyConfig } from '../lib/api.types'
@@ -46,10 +46,9 @@ const ledStyle = (tone: LEDTone): React.CSSProperties => ({
   flexShrink: 0,
 })
 
-function buildKickerText(diagramCount: number, totalViews: number): string {
+function buildKickerText(diagramCount: number): string {
   const diagramWord = diagramCount === 1 ? 'diagram' : 'diagrams'
-  const viewWord = totalViews === 1 ? 'view' : 'views'
-  return `// ${diagramCount} ${diagramWord}, ${totalViews} total ${viewWord}`
+  return `// ${diagramCount} ${diagramWord}`
 }
 
 async function copyToClipboard(text: string): Promise<void> {
@@ -65,10 +64,15 @@ async function copyToClipboard(text: string): Promise<void> {
   }
 }
 
+const PAGE_SIZE = 20
+
 export const MyConfigs: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [configs, setConfigs] = useState<MyConfig[] | null>(null)
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fatal, setFatal] = useState<{ status: number | null } | null>(null)
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null)
@@ -77,8 +81,10 @@ export const MyConfigs: React.FC = () => {
     setError(null)
     setFatal(null)
     try {
-      const data = await fetchMyConfigs()
-      setConfigs(data)
+      const result = await fetchMyConfigs(1, PAGE_SIZE)
+      setConfigs(result.data)
+      setTotal(result.total)
+      setPage(1)
     } catch (err) {
       if (err instanceof ApiError && (err.isNetwork || (err.status ?? 0) >= 500)) {
         setFatal({ status: err.status })
@@ -92,6 +98,21 @@ export const MyConfigs: React.FC = () => {
     load()
   }, [load])
 
+  const handleLoadMore = async () => {
+    setLoadingMore(true)
+    try {
+      const nextPage = page + 1
+      const result = await fetchMyConfigs(nextPage, PAGE_SIZE)
+      setConfigs((prev) => (prev ?? []).concat(result.data))
+      setTotal(result.total)
+      setPage(nextPage)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to load more configs')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   const handleDelete = async (slug: string, title: string) => {
     const confirmed = window.confirm(`Delete "${title}"? This cannot be undone.`)
     if (!confirmed) return
@@ -100,6 +121,7 @@ export const MyConfigs: React.FC = () => {
     try {
       await deleteConfig(slug)
       setConfigs((prev) => prev?.filter((c) => c.slug !== slug) ?? null)
+      setTotal((prev) => Math.max(0, prev - 1))
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete config')
     } finally {
@@ -178,8 +200,8 @@ export const MyConfigs: React.FC = () => {
     )
   }
 
-  const totalViews = configs.reduce((sum, c) => sum + (c.viewCount ?? 0), 0)
-  const kickerText = buildKickerText(configs.length, totalViews)
+  const kickerText = buildKickerText(total)
+  const hasMore = configs.length < total
 
   return (
     <div>
@@ -218,6 +240,27 @@ export const MyConfigs: React.FC = () => {
           deleting={deletingSlug === config.slug}
         />
       ))}
+      {hasMore && (
+        <button
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+          style={{
+            marginTop: 8,
+            padding: '8px 16px',
+            background: 'transparent',
+            border: `1px solid ${colors.border}`,
+            borderRadius: 6,
+            color: colors.textSecondary,
+            cursor: loadingMore ? 'wait' : 'pointer',
+            fontFamily: fonts.mono,
+            fontSize: 11,
+            fontWeight: 600,
+            opacity: loadingMore ? 0.5 : 1,
+          }}
+        >
+          {loadingMore ? 'LOADING...' : 'LOAD MORE'}
+        </button>
+      )}
     </div>
   )
 }
@@ -310,6 +353,7 @@ const ConfigRow: React.FC<{
 }> = ({ config, onView, onEdit, onDelete, deleting }) => {
   const [rowHovered, setRowHovered] = useState(false)
   const [copiedField, setCopiedField] = useState<'share' | 'copy' | null>(null)
+  const [copyingYaml, setCopyingYaml] = useState(false)
 
   const flashCopied = (field: 'share' | 'copy') => {
     setCopiedField(field)
@@ -321,9 +365,20 @@ const ConfigRow: React.FC<{
     flashCopied('share')
   }
 
+  // The my-configs list response no longer carries yaml (dropped to keep that
+  // endpoint's payload light — see GET /configs/user/me), so fetch it on demand
+  // from the single-config endpoint rather than expecting it already in hand.
   const handleCopyYaml = async () => {
-    await copyToClipboard(config.yaml)
-    flashCopied('copy')
+    setCopyingYaml(true)
+    try {
+      const full = await fetchConfig(config.slug)
+      await copyToClipboard(full.yaml)
+      flashCopied('copy')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to fetch YAML')
+    } finally {
+      setCopyingYaml(false)
+    }
   }
 
   return (
@@ -392,9 +447,10 @@ const ConfigRow: React.FC<{
         />
         <RowIconButton
           icon={copiedField === 'copy' ? <CheckIcon /> : <CopyIcon />}
-          label={copiedField === 'copy' ? 'Copied!' : 'Copy YAML'}
+          label={copyingYaml ? 'Fetching…' : copiedField === 'copy' ? 'Copied!' : 'Copy YAML'}
           onClick={handleCopyYaml}
           tone={copiedField === 'copy' ? 'green' : 'default'}
+          disabled={copyingYaml}
         />
         <RowIconButton
           icon={<TrashIcon />}

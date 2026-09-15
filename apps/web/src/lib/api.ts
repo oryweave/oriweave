@@ -3,7 +3,7 @@ import {
   GalleryListResponse,
   GalleryQuery,
   GithubStats,
-  MyConfig,
+  MyConfigListResponse,
   SharedConfig,
   TemplateCategory,
   TemplateDetail,
@@ -115,9 +115,11 @@ async function fetchConfig(slug: string): Promise<SharedConfig> {
   return response.json()
 }
 
-async function fetchMyConfigs(): Promise<MyConfig[]> {
+async function fetchMyConfigs(page = 1, limit = 20): Promise<MyConfigListResponse> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+
   try {
-    const response = await fetch(`${API_BASE}/configs/user/me`, defaultInit)
+    const response = await fetch(`${API_BASE}/configs/user/me?${params.toString()}`, defaultInit)
 
     if (!response.ok) {
       if (response.status === 401) {
