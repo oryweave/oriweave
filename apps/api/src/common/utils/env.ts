@@ -27,6 +27,20 @@ class EnvManager {
     return envVal
   }
 
+  getSecret(key: string, devDefault: string): string {
+    const raw = this.env[key]
+    if (raw !== undefined && raw !== '') return raw
+
+    const nodeEnv = this.env.NODE_ENV
+    if (nodeEnv !== Environment.STAGING && nodeEnv !== Environment.PRODUCTION) {
+      return devDefault
+    }
+
+    throw new Error(
+      `Env variable "${key}" is blank in ${nodeEnv} — refusing to fall back to its local-dev default.`,
+    )
+  }
+
   checkEnv() {
     const rules = {
       NODE_ENV: str({
@@ -41,6 +55,7 @@ class EnvManager {
 
 const envManager = EnvManager.getInstance()
 const getEnvironmentValue = envManager.getValue.bind(envManager)
+const getSecretValue = envManager.getSecret.bind(envManager)
 const checkEnvironment = envManager.checkEnv.bind(envManager)
 
-export { getEnvironmentValue, checkEnvironment }
+export { getEnvironmentValue, getSecretValue, checkEnvironment }

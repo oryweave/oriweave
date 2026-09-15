@@ -1,5 +1,5 @@
 import { Environment } from '@/common/utils/enums'
-import { getEnvironmentValue } from '@/common/utils/env'
+import { getEnvironmentValue, getSecretValue } from '@/common/utils/env'
 import { type Config } from '.'
 
 const config = (): Config => ({
@@ -11,13 +11,13 @@ const config = (): Config => ({
 
   auth: {
     jwt: {
-      secret: getEnvironmentValue('JWT_SECRET', 'oriweave-dev-secret-change-in-production'),
+      secret: getSecretValue('JWT_SECRET', 'oriweave-dev-secret-change-in-production'),
       expiresIn: getEnvironmentValue('JWT_EXPIRES_IN', '7d'),
     },
   },
 
   database: {
-    url: getEnvironmentValue(
+    url: getSecretValue(
       'DATABASE_URL',
       'postgresql://postgres:postgres@localhost:5432/oriweave-db',
     ),
@@ -30,7 +30,7 @@ const config = (): Config => ({
   github: {
     oauth: {
       clientId: getEnvironmentValue('GITHUB_CLIENT_ID', ''),
-      clientSecret: getEnvironmentValue('GITHUB_CLIENT_SECRET', ''),
+      clientSecret: getSecretValue('GITHUB_CLIENT_SECRET', ''),
       callbackUrl: getEnvironmentValue(
         'GITHUB_CALLBACK_URL',
         'http://oriweave.localhost:8087/auth/github/callback',
