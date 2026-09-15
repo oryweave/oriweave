@@ -45,7 +45,6 @@ export class AuthService {
       throw new UnauthorizedException(err instanceof Error ? err.message : 'GitHub OAuth failed')
     }
 
-    // Find or create user in our database
     return this.usersService.findOrCreateFromGitHub(profile)
   }
 

@@ -214,7 +214,6 @@ export class ConfigsService {
       config.visibility = dto.visibility as Visibility
     }
 
-    // Update tags
     if (parsed?.meta?.tags) {
       await this.tagRepo.delete({ configId: config.id })
       const tagEntities = parsed.meta.tags.map((tag) =>
@@ -223,10 +222,6 @@ export class ConfigsService {
       await this.tagRepo.save(tagEntities)
     }
 
-    // A plain update, not save(config) — config.tags is the stale eager-loaded
-    // relation from findBySlug() above and would make TypeORM's cascade try to
-    // reconcile it against the rows the tagRepo calls above already replaced,
-    // nulling out config_tags.config_id (a NOT NULL primary key column).
     await this.configRepo.update(config.id, {
       yaml: config.yaml,
       title: config.title,
