@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { colors as tokenColors, fonts } from '@oriweave/renderer'
 import { createConfig, updateConfig } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -100,6 +101,7 @@ export const SharePanel: React.FC<SharePanelProps> = ({
   initialVisibility,
 }) => {
   const { isLoggedIn } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
@@ -192,6 +194,14 @@ export const SharePanel: React.FC<SharePanelProps> = ({
       setShareResult(url)
       setJustShared(true)
       setTimeout(() => setJustShared(false), 2000)
+
+      // First share of this session, while signed in: move onto /edit/:slug so
+      // further saves update this config instead of creating a new one each time
+      // (previously every "Share as Link" click from /editor created a fresh row,
+      // littering the gallery/My Configs with near-duplicates from the same author).
+      if (!editingSlug && isLoggedIn) {
+        navigate(`/edit/${result.slug}`, { replace: true })
+      }
     } catch (err) {
       setShareError(err instanceof Error ? err.message : 'Failed to share')
       setTimeout(() => setShareError(null), 4000)
