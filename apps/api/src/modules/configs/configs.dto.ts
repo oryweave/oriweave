@@ -52,4 +52,14 @@ class UpdateConfigDto {
   visibility?: Visibility
 }
 
-export { CreateConfigDto, ListConfigsQueryDto, UpdateConfigDto }
+class ListMyConfigsQueryDto {
+  @IsOptional()
+  @IsNumberString()
+  page?: string
+
+  @IsOptional()
+  @IsNumberString()
+  limit?: string
+}
+
+export { CreateConfigDto, ListConfigsQueryDto, ListMyConfigsQueryDto, UpdateConfigDto }
