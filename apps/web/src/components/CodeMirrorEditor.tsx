@@ -20,6 +20,7 @@ import {
 import { tags } from '@lezer/highlight'
 import { yaml } from '@codemirror/lang-yaml'
 import { colors, fonts } from '@oriweave/renderer'
+import { indentRainbow } from '../lib/indentRainbow'
 
 interface CodeMirrorEditorProps {
   value: string
@@ -163,6 +164,7 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         autocompletion(),
         lintGutter(),
         yaml(),
+        indentRainbow,
         syntaxHighlighting(highlightColors),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
         theme,
