@@ -1,9 +1,10 @@
 import html2canvas from 'html2canvas'
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { parse, layout } from '@oriweave/core'
 import { colors, fonts, radii, motion } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
+import { KeyboardShortcutsPanel } from '../components/KeyboardShortcutsPanel'
 import { PreviewPane } from '../components/PreviewPane'
 import SAMPLE_YAML from '../sample.yaml?raw'
 import { SharePanel } from '../components/SharePanel'
@@ -45,6 +46,8 @@ export const EditorPage: React.FC<EditorPageProps> = ({
   const [splitRatio, setSplitRatio] = useState(0.27)
   const [resizing, setResizing] = useState(false)
   const [editorVisible, setEditorVisible] = useState(true)
+  const [renderNonce, setRenderNonce] = useState(0)
+  const [justRerendered, setJustRerendered] = useState(false)
 
   const captureRef = useRef<HTMLDivElement>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -85,7 +88,10 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         networkCount: 0,
       }
     }
-  }, [yaml])
+    // renderNonce isn't read above — it's here purely to let Ctrl+S force a fresh
+    // layout pass (e.g. retry after a transient layout error) even when yaml hasn't changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yaml, renderNonce])
 
   const onResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -125,6 +131,33 @@ export const EditorPage: React.FC<EditorPageProps> = ({
       setIsExporting(false)
     }
   }, [graph])
+
+  // Ctrl/Cmd+S: force a fresh layout pass. Ctrl/Cmd+E: toggle the editor pane.
+  // Ctrl/Cmd+Shift+P: export PNG. Global (not scoped to the YAML editor) so they
+  // work regardless of which pane has focus.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey
+      if (!mod) return
+      const key = e.key.toLowerCase()
+
+      if (!e.shiftKey && key === 's') {
+        e.preventDefault()
+        setRenderNonce((n) => n + 1)
+        setJustRerendered(true)
+        setTimeout(() => setJustRerendered(false), 1200)
+      } else if (!e.shiftKey && key === 'e') {
+        e.preventDefault()
+        setEditorVisible((v) => !v)
+      } else if (e.shiftKey && key === 'p') {
+        e.preventDefault()
+        handleExportPng()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleExportPng])
 
   return (
     <div
@@ -179,7 +212,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
               e.currentTarget.style.borderColor = colors.border
               e.currentTarget.style.color = colors.textSecondary
             }}
-            title={editorVisible ? 'Hide editor' : 'Show editor'}
+            title={`${editorVisible ? 'Hide editor' : 'Show editor'} (Ctrl+E)`}
             style={toggleButtonStyle}
           >
             <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
@@ -191,6 +224,29 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             </svg>
           </button>
 
+          {justRerendered && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 8,
+                left: 48,
+                zIndex: 20,
+                padding: '6px 10px',
+                background: 'rgba(22, 27, 34, 0.9)',
+                border: `1px solid ${colors.primaryBorder}`,
+                borderRadius: radii.md,
+                color: colors.primary,
+                fontFamily: fonts.mono,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                pointerEvents: 'none',
+              }}
+            >
+              ⟳ RE-RENDERED
+            </div>
+          )}
+
           <PreviewPane
             graph={graph}
             errors={errors}
@@ -198,13 +254,16 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             connections={connections}
             captureRef={captureRef}
             headerActions={
-              <SharePanel
-                yaml={yaml}
-                onExportPng={handleExportPng}
-                isExporting={isExporting}
-                editingSlug={editingSlug}
-                initialVisibility={initialVisibility}
-              />
+              <>
+                <KeyboardShortcutsPanel />
+                <SharePanel
+                  yaml={yaml}
+                  onExportPng={handleExportPng}
+                  isExporting={isExporting}
+                  editingSlug={editingSlug}
+                  initialVisibility={initialVisibility}
+                />
+              </>
             }
           />
         </div>
