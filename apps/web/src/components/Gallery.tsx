@@ -365,8 +365,14 @@ const GalleryCard: React.FC<{
             flexWrap: 'wrap',
           }}
         >
-          {item.author && <AuthorAvatar username={item.author.username} />}
-          {item.author && <span>@{item.author.username}</span>}
+          {item.author ? (
+            <>
+              <AuthorAvatar username={item.author.username} />
+              <span>@{item.author.username}</span>
+            </>
+          ) : (
+            <span style={{ fontStyle: 'italic' }}>Anonymous</span>
+          )}
           <span>{formatDate(item.createdAt)}</span>
         </div>
 
