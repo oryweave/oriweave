@@ -23,6 +23,7 @@ import type { ValidationError } from '@oriweave/core'
 import { colors, fonts } from '@oriweave/renderer'
 import { indentRainbow } from '../lib/indentRainbow'
 import { resolveErrorPositions } from '../lib/errorPositions'
+import { yamlValueCompletions } from '../lib/yamlCompletions'
 
 interface CodeMirrorEditorProps {
   value: string
@@ -167,7 +168,7 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         foldGutter(),
         bracketMatching(),
         highlightSelectionMatches(),
-        autocompletion(),
+        autocompletion({ override: [yamlValueCompletions] }),
         linter((view): Diagnostic[] => {
           const currentErrors = errorsRef.current
           if (currentErrors.length === 0) return []
