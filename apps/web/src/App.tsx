@@ -39,6 +39,7 @@ const EditOwnConfig: React.FC = () => {
   const { user, isLoading } = useAuth()
 
   const [yaml, setYaml] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'unlisted'>('unlisted')
   const [error, setError] = useState<string | null>(null)
   const [authorChecked, setAuthorChecked] = useState(false)
 
@@ -57,6 +58,7 @@ const EditOwnConfig: React.FC = () => {
           return
         }
         setYaml(config.yaml)
+        setVisibility(config.visibility === 'public' ? 'public' : 'unlisted')
         setAuthorChecked(true)
       })
       .catch((err) => {
@@ -77,7 +79,7 @@ const EditOwnConfig: React.FC = () => {
     return <FullScreenMessage>Loading config...</FullScreenMessage>
   }
 
-  return <EditorPage initialYaml={yaml} editingSlug={slug} />
+  return <EditorPage initialYaml={yaml} editingSlug={slug} initialVisibility={visibility} />
 }
 
 export const App: React.FC = () => {

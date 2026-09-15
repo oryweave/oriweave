@@ -8,7 +8,6 @@ import {
   Body,
   Query,
   Req,
-  UsePipes,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -32,8 +31,7 @@ export class ConfigsController {
 
   @Post()
   @UseGuards(OptionalAuthGuard)
-  @UsePipes(YamlValidationPipe)
-  async create(@Body() dto: CreateConfigDto, @Req() request: Request) {
+  async create(@Body(YamlValidationPipe) dto: CreateConfigDto, @Req() request: Request) {
     const user = request.user
     const config = await this.configsService.create(dto, user?.id)
     return {
@@ -133,8 +131,11 @@ export class ConfigsController {
 
   @Patch(':slug')
   @UseGuards(AuthGuard)
-  @UsePipes(YamlValidationPipe)
-  async update(@Param('slug') slug: string, @Body() dto: UpdateConfigDto, @Req() request: Request) {
+  async update(
+    @Param('slug') slug: string,
+    @Body(YamlValidationPipe) dto: UpdateConfigDto,
+    @Req() request: Request,
+  ) {
     const user = request.user
     if (!user) {
       throw new ForbiddenException()
