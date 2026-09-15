@@ -4,6 +4,7 @@ import { parse, layout } from '@oriweave/core'
 import { colors, fonts, radii, motion } from '@oriweave/renderer'
 import { AppNav } from '../components/AppNav'
 import { buildDeviceMap } from '../lib/device'
+import { KeyboardShortcutsPanel } from '../components/KeyboardShortcutsPanel'
 import { PreviewPane } from '../components/PreviewPane'
 import SAMPLE_YAML from '../sample.yaml?raw'
 import { SharePanel } from '../components/SharePanel'
@@ -253,13 +254,16 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             connections={connections}
             captureRef={captureRef}
             headerActions={
-              <SharePanel
-                yaml={yaml}
-                onExportPng={handleExportPng}
-                isExporting={isExporting}
-                editingSlug={editingSlug}
-                initialVisibility={initialVisibility}
-              />
+              <>
+                <KeyboardShortcutsPanel />
+                <SharePanel
+                  yaml={yaml}
+                  onExportPng={handleExportPng}
+                  isExporting={isExporting}
+                  editingSlug={editingSlug}
+                  initialVisibility={initialVisibility}
+                />
+              </>
             }
           />
         </div>
