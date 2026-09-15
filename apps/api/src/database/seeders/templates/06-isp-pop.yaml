@@ -1,0 +1,187 @@
+meta:
+  title: ISP PoP — Nested Access Topology
+  subtitle: Autonomous System down through a point-of-presence access tier
+  tags:
+    - ISP
+    - BGP
+    - NESTED GROUPS
+
+networks:
+  - id: transit
+    name: Upstream Transit
+    subnet: 203.0.113.0/30
+  - id: core
+    name: MPLS Core
+    subnet: 10.255.0.0/24
+  - id: customer
+    name: Customer Access
+    subnet: 198.51.100.0/24
+
+# Three levels of nesting, matching the operator's own mental model of the
+# network: the Autonomous System contains the SP Lab (the operator's own
+# infrastructure), which in turn contains an Access tier and a PoP. Group
+# nesting is expressed purely via `parent` — see packages/core's groups.ts —
+# and renders as boxes-within-boxes, distinct from a device's flat `group`
+# membership.
+groups:
+  - id: as
+    name: AS 65000
+    style: dashed
+    color: "#00e5ff"
+  - id: sp-lab
+    name: SP Lab
+    parent: as
+    style: dashed
+    color: "#ffab00"
+  - id: pop1
+    name: PoP1
+    parent: sp-lab
+    style: solid
+    color: "#00e676"
+  - id: access
+    name: Access
+    parent: sp-lab
+    style: solid
+    color: "#d500f9"
+
+devices:
+  - id: edge-router
+    name: edge-router
+    type: router
+    ip: 203.0.113.1
+    network: transit
+    group: as
+    tags:
+      - BGP
+      - BORDER
+    interfaces:
+      sfp:
+        count: 2
+        speed: 10G
+        ports:
+          - { label: "TRANSIT1" }
+          - { label: "TRANSIT2" }
+
+  - id: core-router
+    name: core-router
+    type: router
+    ip: 10.255.0.1
+    network: core
+    group: sp-lab
+    tags:
+      - MPLS
+      - P ROUTER
+    interfaces:
+      sfp:
+        count: 4
+        speed: 10G
+
+  # PoP1: the two PE routers a real point-of-presence would run for
+  # redundancy, each with its own uplink to the core.
+  - id: pe-router-1
+    name: pe-router-1
+    type: router
+    ip: 10.255.0.11
+    network: core
+    group: pop1
+    tags:
+      - PE ROUTER
+    interfaces:
+      sfp:
+        count: 2
+        speed: 10G
+
+  - id: pe-router-2
+    name: pe-router-2
+    type: router
+    ip: 10.255.0.12
+    network: core
+    group: pop1
+    tags:
+      - PE ROUTER
+    interfaces:
+      sfp:
+        count: 2
+        speed: 10G
+
+  # Access tier: the switches and CE routers facing the customer edge,
+  # nested alongside PoP1 under the shared SP Lab parent.
+  - id: access-switch-1
+    name: access-switch-1
+    type: switch
+    ip: 10.255.0.21
+    network: core
+    group: access
+    interfaces:
+      ethernet:
+        count: 8
+        speed: 1G
+
+  - id: access-switch-2
+    name: access-switch-2
+    type: switch
+    ip: 10.255.0.22
+    network: core
+    group: access
+    interfaces:
+      ethernet:
+        count: 8
+        speed: 1G
+
+  - id: customer-ce-1
+    name: customer-ce-1
+    type: router
+    ip: 198.51.100.10
+    network: customer
+    group: access
+    tags:
+      - CE
+    interfaces:
+      ethernet:
+        count: 2
+
+  - id: customer-ce-2
+    name: customer-ce-2
+    type: router
+    ip: 198.51.100.20
+    network: customer
+    group: access
+    tags:
+      - CE
+    interfaces:
+      ethernet:
+        count: 2
+
+connections:
+  - from: edge-router
+    to: core-router
+    type: fiber
+    speed: 10G
+    label: transit uplink
+
+  - from: core-router
+    to: pe-router-1
+    type: fiber
+    speed: 10G
+  - from: core-router
+    to: pe-router-2
+    type: fiber
+    speed: 10G
+
+  - from: pe-router-1
+    to: access-switch-1
+    type: fiber
+    speed: 10G
+  - from: pe-router-2
+    to: access-switch-2
+    type: fiber
+    speed: 10G
+
+  - from: access-switch-1
+    to: customer-ce-1
+    type: ethernet
+    speed: 1G
+  - from: access-switch-2
+    to: customer-ce-2
+    type: ethernet
+    speed: 1G
