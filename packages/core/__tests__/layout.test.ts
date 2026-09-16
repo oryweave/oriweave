@@ -126,7 +126,7 @@ describe('layout › basic positioning', () => {
     }
   })
 
-  it('gives all nodes uniform dimensions regardless of content', () => {
+  it('gives all nodes uniform width and scales height by content', () => {
     const doc = buildDoc({
       devices: [
         buildDevice({ id: 'bare', name: 'Bare' }),
@@ -149,12 +149,13 @@ describe('layout › basic positioning', () => {
     const graph = layout(doc)
 
     const widths = new Set(graph.nodes.map((n) => n.width))
-    const heights = new Set(graph.nodes.map((n) => n.height))
-
     expect(widths.size).toBe(1)
-    expect(heights.size).toBe(1)
     expect(graph.nodes[0].width).toBe(DEFAULT_LAYOUT_OPTIONS.nodeWidth)
-    expect(graph.nodes[0].height).toBe(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+
+    const bare = graph.nodes.find((n) => n.device.id === 'bare')!
+    const loaded = graph.nodes.find((n) => n.device.id === 'loaded')!
+    expect(bare.height).toBe(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+    expect(loaded.height).toBeGreaterThan(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
   })
 })
 
@@ -650,6 +651,126 @@ describe('layout › groups', () => {
     // of devices), not balloon from an unrelated sibling being dragged
     // down with it on repeated (mis-triggered) vertical-shift passes.
     expect(infra.height).toBeLessThan(DEFAULT_LAYOUT_OPTIONS.nodeHeight * 6)
+  })
+
+  it('does not overlap sibling subgroups within the same parent', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'datacenter', name: 'Datacenter' },
+        { id: 'compute', name: 'Compute', parent: 'datacenter' },
+        { id: 'storage', name: 'Storage', parent: 'datacenter' },
+      ],
+      devices: [
+        buildDevice({ id: 'gateway', name: 'Gateway', group: 'datacenter' }),
+        buildDevice({ id: 'vm-1', name: 'VM 1', group: 'compute' }),
+        buildDevice({ id: 'vm-2', name: 'VM 2', group: 'compute' }),
+        buildDevice({ id: 'nas-1', name: 'NAS 1', group: 'storage' }),
+        buildDevice({ id: 'nas-2', name: 'NAS 2', group: 'storage' }),
+      ],
+      connections: [
+        buildConnection({ from: 'gateway', to: 'vm-1' }),
+        buildConnection({ from: 'gateway', to: 'vm-2' }),
+        buildConnection({ from: 'gateway', to: 'nas-1' }),
+        buildConnection({ from: 'gateway', to: 'nas-2' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const compute = byId.get('compute')!
+    const storage = byId.get('storage')!
+
+    expect(overlaps(compute, storage)).toBe(false)
+    expect(contains(byId.get('datacenter')!, compute)).toBe(true)
+    expect(contains(byId.get('datacenter')!, storage)).toBe(true)
+  })
+
+  it('does not overlap any group pair in a complex multi-level topology', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'network-edge', name: 'Network Edge' },
+        { id: 'wireless', name: 'Wireless Access' },
+        { id: 'servers', name: 'Servers' },
+        { id: 'vm-cluster', name: 'VM Cluster', parent: 'servers' },
+        { id: 'bare-metal', name: 'Bare Metal', parent: 'servers' },
+        { id: 'clients', name: 'Clients' },
+        { id: 'iot', name: 'IoT' },
+      ],
+      devices: [
+        buildDevice({ id: 'modem', name: 'Modem', group: 'network-edge' }),
+        buildDevice({ id: 'router', name: 'Router', group: 'network-edge' }),
+        buildDevice({ id: 'switch', name: 'Switch' }),
+        buildDevice({ id: 'ap-1', name: 'AP 1', group: 'wireless' }),
+        buildDevice({ id: 'ap-2', name: 'AP 2', group: 'wireless' }),
+        buildDevice({ id: 'vm-host', name: 'VM Host', group: 'vm-cluster' }),
+        buildDevice({ id: 'vm-backup', name: 'VM Backup', group: 'vm-cluster' }),
+        buildDevice({ id: 'truenas', name: 'TrueNAS', group: 'bare-metal' }),
+        buildDevice({ id: 'desktop', name: 'Desktop', group: 'clients' }),
+        buildDevice({ id: 'laptop', name: 'Laptop', group: 'clients' }),
+        buildDevice({ id: 'camera', name: 'Camera', group: 'iot' }),
+        buildDevice({ id: 'sensor', name: 'Sensor', group: 'iot' }),
+      ],
+      connections: [
+        buildConnection({ from: 'modem', to: 'router' }),
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'ap-1' }),
+        buildConnection({ from: 'switch', to: 'ap-2' }),
+        buildConnection({ from: 'switch', to: 'vm-host' }),
+        buildConnection({ from: 'switch', to: 'vm-backup' }),
+        buildConnection({ from: 'switch', to: 'truenas' }),
+        buildConnection({ from: 'switch', to: 'desktop' }),
+        buildConnection({ from: 'switch', to: 'laptop' }),
+        buildConnection({ from: 'switch', to: 'camera' }),
+        buildConnection({ from: 'switch', to: 'sensor' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const named = graph.groups.filter((g) => g.group.name !== '')
+
+    for (let i = 0; i < named.length; i++) {
+      for (let j = i + 1; j < named.length; j++) {
+        const a = named[i]
+        const b = named[j]
+        const aIsParentOfB = b.group.parent === a.group.id
+        const bIsParentOfA = a.group.parent === b.group.id
+        if (aIsParentOfB || bIsParentOfA) continue
+        expect(overlaps(a, b), `${a.group.id} should not overlap ${b.group.id}`).toBe(false)
+      }
+    }
+  })
+
+  it('maintains group contiguity when YAML interleaves devices from different groups', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'alpha', name: 'Alpha' },
+        { id: 'beta', name: 'Beta' },
+      ],
+      devices: [
+        buildDevice({ id: 'a1', name: 'A1', group: 'alpha' }),
+        buildDevice({ id: 'b1', name: 'B1', group: 'beta' }),
+        buildDevice({ id: 'a2', name: 'A2', group: 'alpha' }),
+        buildDevice({ id: 'b2', name: 'B2', group: 'beta' }),
+      ],
+      connections: [
+        buildConnection({ from: 'a1', to: 'b1' }),
+        buildConnection({ from: 'a2', to: 'b2' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const alpha = byId.get('alpha')!
+    const beta = byId.get('beta')!
+
+    expect(overlaps(alpha, beta)).toBe(false)
+
+    const maxGroupWidth =
+      2 * DEFAULT_LAYOUT_OPTIONS.nodeWidth +
+      DEFAULT_LAYOUT_OPTIONS.horizontalSpacing +
+      2 * DEFAULT_LAYOUT_OPTIONS.groupPadding
+    expect(alpha.width).toBeLessThanOrEqual(maxGroupWidth)
+    expect(beta.width).toBeLessThanOrEqual(maxGroupWidth)
   })
 })
 
