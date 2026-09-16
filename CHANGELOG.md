@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1](https://github.com/oryweave/oriweave/compare/v1.0.0...v1.0.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* content-aware card heights and group overlap resolution ([#108](https://github.com/oryweave/oriweave/issues/108)) ([c562878](https://github.com/oryweave/oriweave/commit/c5628787f332873f97204971d3f6294035974a4c))
+
 ## [1.0.0](https://github.com/oryweave/oriweave/compare/v0.7.0...v1.0.0) (2026-09-15)
 
 
