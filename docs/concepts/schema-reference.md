@@ -75,6 +75,6 @@ connections:
     speed: 2.5G
 ```
 
-This is one of the seeded templates. Four others (Proxmox cluster, NAS-centric,
-Tailscale-distributed, k3s cluster) ship with the app and are discoverable from the *Templates*
-page.
+This is one of the seeded templates. Five others (Proxmox cluster, NAS-centric,
+Tailscale-distributed, k3s cluster, ISP PoP) ship with the app and are discoverable from the
+*Templates* page.

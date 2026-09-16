@@ -22,6 +22,27 @@ function findEdge(graph: PositionedGraph, from: string, to: string) {
   return graph.edges.find((e) => e.fromNodeId === from && e.toNodeId === to)
 }
 
+/** Whether two positioned rectangles (nodes or groups) overlap in 2D. */
+function overlaps(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
+/** Whether `outer` fully encloses `inner`. */
+function contains(
+  outer: { x: number; y: number; width: number; height: number },
+  inner: { x: number; y: number; width: number; height: number },
+): boolean {
+  return (
+    outer.x <= inner.x &&
+    outer.y <= inner.y &&
+    outer.x + outer.width >= inner.x + inner.width &&
+    outer.y + outer.height >= inner.y + inner.height
+  )
+}
+
 // ─── Basic positioning ────────────────────────────────────────────
 
 describe('layout › basic positioning', () => {
@@ -105,7 +126,7 @@ describe('layout › basic positioning', () => {
     }
   })
 
-  it('gives all nodes uniform dimensions regardless of content', () => {
+  it('gives all nodes uniform width and scales height by content', () => {
     const doc = buildDoc({
       devices: [
         buildDevice({ id: 'bare', name: 'Bare' }),
@@ -128,12 +149,73 @@ describe('layout › basic positioning', () => {
     const graph = layout(doc)
 
     const widths = new Set(graph.nodes.map((n) => n.width))
-    const heights = new Set(graph.nodes.map((n) => n.height))
-
     expect(widths.size).toBe(1)
-    expect(heights.size).toBe(1)
     expect(graph.nodes[0].width).toBe(DEFAULT_LAYOUT_OPTIONS.nodeWidth)
-    expect(graph.nodes[0].height).toBe(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+
+    const bare = graph.nodes.find((n) => n.device.id === 'bare')!
+    const loaded = graph.nodes.find((n) => n.device.id === 'loaded')!
+    expect(bare.height).toBe(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+    expect(loaded.height).toBeGreaterThan(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+  })
+})
+
+// ─── Card height (port-row overflow) ───────────────────────────────
+
+describe('layout › card height', () => {
+  it('keeps the default height for a device with few ports', () => {
+    const doc = buildDoc({
+      devices: [buildDevice({ id: 'router', interfaces: { ethernet: { count: 4 } } })],
+    })
+
+    const graph = layout(doc)
+
+    expect(findNode(graph, 'router')!.height).toBe(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+  })
+
+  it('grows a card taller when its ethernet ports need a second row', () => {
+    const doc = buildDoc({
+      devices: [buildDevice({ id: 'switch', interfaces: { ethernet: { count: 24 } } })],
+    })
+
+    const graph = layout(doc)
+
+    expect(findNode(graph, 'switch')!.height).toBeGreaterThan(DEFAULT_LAYOUT_OPTIONS.nodeHeight)
+  })
+
+  it('positions the next layer clear of a taller card in the layer above', () => {
+    const doc = buildDoc({
+      devices: [
+        buildDevice({ id: 'switch', interfaces: { ethernet: { count: 24 } } }),
+        buildDevice({ id: 'leaf' }),
+      ],
+      connections: [buildConnection({ from: 'switch', to: 'leaf' })],
+    })
+
+    const graph = layout(doc)
+
+    const switchNode = findNode(graph, 'switch')!
+    const leafNode = findNode(graph, 'leaf')!
+
+    expect(leafNode.y).toBeGreaterThanOrEqual(switchNode.y + switchNode.height)
+  })
+
+  it('grows a card even taller when SFP has to drop to its own row beside a wide ethernet block', () => {
+    const ethOnly = buildDoc({
+      devices: [buildDevice({ id: 'switch', interfaces: { ethernet: { count: 24 } } })],
+    })
+    const ethPlusSfp = buildDoc({
+      devices: [
+        buildDevice({
+          id: 'switch',
+          interfaces: { ethernet: { count: 24 }, sfp: { count: 4 } },
+        }),
+      ],
+    })
+
+    const ethOnlyHeight = findNode(layout(ethOnly), 'switch')!.height
+    const ethPlusSfpHeight = findNode(layout(ethPlusSfp), 'switch')!.height
+
+    expect(ethPlusSfpHeight).toBeGreaterThan(ethOnlyHeight)
   })
 })
 
@@ -231,6 +313,41 @@ describe('layout › connection rerouting', () => {
 
     const hostToSw = graph.edges.filter((e) => e.fromNodeId === 'host' && e.toNodeId === 'sw')
     expect(hostToSw).toHaveLength(1)
+  })
+
+  it('preserves genuine parallel links between the same top-level pair (no rerouting)', () => {
+    const doc: HomelabDocument = {
+      meta: { title: 'Parallel links test' },
+      devices: [
+        buildDevice({
+          id: 'sw1',
+          name: 'Switch 1',
+          type: 'switch',
+          interfaces: { ethernet: { count: 4 } },
+        }),
+        buildDevice({
+          id: 'sw2',
+          name: 'Switch 2',
+          type: 'switch',
+          interfaces: { ethernet: { count: 4 } },
+        }),
+      ],
+      connections: [
+        buildConnection({ from: 'sw1', to: 'sw2' }),
+        buildConnection({ from: 'sw1', to: 'sw2' }),
+      ],
+    }
+
+    const graph = layout(doc)
+
+    const links = graph.edges.filter((e) => e.fromNodeId === 'sw1' && e.toNodeId === 'sw2')
+    expect(links).toHaveLength(2)
+
+    // Each link should get its own port, so they shouldn't render on
+    // identical coordinates.
+    expect(links[0].points).not.toEqual(links[1].points)
+    expect(links[0].fromPortIndex).not.toBe(links[1].fromPortIndex)
+    expect(links[0].toPortIndex).not.toBe(links[1].toPortIndex)
   })
 })
 
@@ -331,6 +448,329 @@ describe('layout › groups', () => {
     // Nodes in different groups should be spaced further apart than
     // nodes sharing a group.
     expect(diffGap).toBeGreaterThan(sameGap)
+  })
+
+  it('adds extra vertical spacing between layers when top-level groups differ, so group boxes never overlap', () => {
+    const buildTwoLayerDoc = (grouped: boolean) =>
+      buildDoc({
+        groups: grouped
+          ? [
+              { id: 'top-group', name: 'Top' },
+              { id: 'bottom-group', name: 'Bottom' },
+            ]
+          : undefined,
+        devices: [
+          buildDevice({ id: 'top', name: 'Top', ...(grouped ? { group: 'top-group' } : {}) }),
+          buildDevice({
+            id: 'bottom',
+            name: 'Bottom',
+            ...(grouped ? { group: 'bottom-group' } : {}),
+          }),
+        ],
+        connections: [buildConnection({ from: 'top', to: 'bottom' })],
+      })
+
+    const groupedGraph = layout(buildTwoLayerDoc(true))
+    const ungroupedGraph = layout(buildTwoLayerDoc(false))
+
+    const groupedGap =
+      findNode(groupedGraph, 'bottom')!.y -
+      (findNode(groupedGraph, 'top')!.y + findNode(groupedGraph, 'top')!.height)
+    const ungroupedGap =
+      findNode(ungroupedGraph, 'bottom')!.y -
+      (findNode(ungroupedGraph, 'top')!.y + findNode(ungroupedGraph, 'top')!.height)
+
+    expect(groupedGap).toBeGreaterThan(ungroupedGap)
+
+    // The two group boxes themselves must not overlap vertically — this is
+    // the actual bug: box padding used to extend past the flat layer gap.
+    const topBox = groupedGraph.groups.find((g) => g.group.id === 'top-group')!
+    const bottomBox = groupedGraph.groups.find((g) => g.group.id === 'bottom-group')!
+    expect(topBox.y + topBox.height).toBeLessThanOrEqual(bottomBox.y)
+  })
+
+  it('does not add extra vertical spacing across layers that share a top-level group', () => {
+    // control-plane and workers are both children of k3s-cluster, at
+    // different depths — they must NOT get the cross-group gap between
+    // them, only the true group boundary (edge → k3s-cluster) should.
+    const doc = buildDoc({
+      groups: [
+        { id: 'edge', name: 'Edge' },
+        { id: 'k3s-cluster', name: 'k3s' },
+        { id: 'control-plane', name: 'Control Plane', parent: 'k3s-cluster' },
+        { id: 'workers', name: 'Workers', parent: 'k3s-cluster' },
+      ],
+      devices: [
+        buildDevice({ id: 'switch', name: 'Switch', group: 'edge' }),
+        buildDevice({ id: 'master', name: 'Master', group: 'control-plane' }),
+        buildDevice({ id: 'worker', name: 'Worker', group: 'workers' }),
+      ],
+      connections: [
+        buildConnection({ from: 'switch', to: 'master' }),
+        buildConnection({ from: 'master', to: 'worker' }),
+      ],
+    })
+
+    const graph = layout(doc)
+
+    const switchToMasterGap =
+      findNode(graph, 'master')!.y -
+      (findNode(graph, 'switch')!.y + findNode(graph, 'switch')!.height)
+    const masterToWorkerGap =
+      findNode(graph, 'worker')!.y -
+      (findNode(graph, 'master')!.y + findNode(graph, 'master')!.height)
+
+    // switch (edge) → master (k3s-cluster) crosses a real group boundary;
+    // master → worker stays within k3s-cluster the whole way.
+    expect(switchToMasterGap).toBeGreaterThan(masterToWorkerGap)
+  })
+
+  it('never overlaps a leaf group box with a NESTED group box in the layer after it', () => {
+    // A flat group followed by a group with nested children needs more
+    // clearance than a flat-vs-flat boundary: the nested group's own
+    // extra padding (see positionGroups' extraPad) stacks on top of the
+    // plain cross-group gap, so a fixed guess isn't enough — this must
+    // hold regardless of how deep the nesting goes.
+    const doc = buildDoc({
+      groups: [
+        { id: 'edge', name: 'Edge' },
+        { id: 'k3s-cluster', name: 'k3s' },
+        { id: 'control-plane', name: 'Control Plane', parent: 'k3s-cluster' },
+        { id: 'workers', name: 'Workers', parent: 'k3s-cluster' },
+        { id: 'storage-tier', name: 'Storage' },
+      ],
+      devices: [
+        buildDevice({ id: 'router', name: 'Router', group: 'edge' }),
+        buildDevice({ id: 'switch', name: 'Switch', group: 'edge' }),
+        buildDevice({ id: 'master', name: 'Master', group: 'control-plane' }),
+        buildDevice({ id: 'worker-1', name: 'Worker 1', group: 'workers' }),
+        buildDevice({ id: 'worker-2', name: 'Worker 2', group: 'workers' }),
+        buildDevice({ id: 'nfs', name: 'NFS', group: 'storage-tier' }),
+      ],
+      connections: [
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'master' }),
+        buildConnection({ from: 'switch', to: 'worker-1' }),
+        buildConnection({ from: 'switch', to: 'worker-2' }),
+        buildConnection({ from: 'switch', to: 'nfs' }),
+      ],
+    })
+
+    const graph = layout(doc)
+
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const edge = byId.get('edge')!
+    const k3sCluster = byId.get('k3s-cluster')!
+    const storageTier = byId.get('storage-tier')!
+
+    expect(overlaps(edge, k3sCluster)).toBe(false)
+    expect(overlaps(edge, storageTier)).toBe(false)
+    expect(overlaps(k3sCluster, storageTier)).toBe(false)
+  })
+
+  it('keeps every group box fully inside its own parent after overlap resolution', () => {
+    // Overlap resolution must never patch a box's coordinates directly —
+    // only shift the underlying nodes and recompute — otherwise a parent
+    // can end up not enclosing children it just got separated from a
+    // sibling around (the actual regression: fixing edge-vs-k3s-cluster
+    // by nudging boxes directly left control-plane/workers stranded
+    // outside their own, unmoved, k3s-cluster wrapper).
+    const doc = buildDoc({
+      groups: [
+        { id: 'edge', name: 'Edge' },
+        { id: 'k3s-cluster', name: 'k3s' },
+        { id: 'control-plane', name: 'Control Plane', parent: 'k3s-cluster' },
+        { id: 'workers', name: 'Workers', parent: 'k3s-cluster' },
+        { id: 'storage-tier', name: 'Storage' },
+      ],
+      devices: [
+        buildDevice({ id: 'router', name: 'Router', group: 'edge' }),
+        buildDevice({ id: 'switch', name: 'Switch', group: 'edge' }),
+        buildDevice({ id: 'master', name: 'Master', group: 'control-plane' }),
+        buildDevice({ id: 'worker-1', name: 'Worker 1', group: 'workers' }),
+        buildDevice({ id: 'worker-2', name: 'Worker 2', group: 'workers' }),
+        buildDevice({ id: 'nfs', name: 'NFS', group: 'storage-tier' }),
+      ],
+      connections: [
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'master' }),
+        buildConnection({ from: 'switch', to: 'worker-1' }),
+        buildConnection({ from: 'switch', to: 'worker-2' }),
+        buildConnection({ from: 'switch', to: 'nfs' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+
+    expect(contains(byId.get('k3s-cluster')!, byId.get('control-plane')!)).toBe(true)
+    expect(contains(byId.get('k3s-cluster')!, byId.get('workers')!)).toBe(true)
+  })
+
+  it('correctly separates a group spanning multiple depths from a single-depth sibling it shares a row with', () => {
+    // `infra` wraps `edge` (depths 0-1) AND `storage-zone` (depth 2) — its
+    // depth RANGE is [0,2]. `clients` sits only at depth 2. Comparing only
+    // each group's shallowest depth (0 vs 2) would misjudge this as
+    // "different rows" and trigger a pointless, ever-growing vertical
+    // shift instead of the horizontal one actually needed at the shared
+    // depth-2 row.
+    const doc = buildDoc({
+      groups: [
+        { id: 'infra', name: 'Infrastructure' },
+        { id: 'edge', name: 'Edge', parent: 'infra' },
+        { id: 'storage-zone', name: 'Storage', parent: 'infra' },
+        { id: 'clients', name: 'Clients' },
+      ],
+      devices: [
+        buildDevice({ id: 'router', name: 'Router', group: 'edge' }),
+        buildDevice({ id: 'switch', name: 'Switch', group: 'edge' }),
+        buildDevice({ id: 'truenas', name: 'TrueNAS', group: 'storage-zone' }),
+        buildDevice({ id: 'backup', name: 'Backup', group: 'storage-zone' }),
+        buildDevice({ id: 'workstation', name: 'Workstation', group: 'clients' }),
+        buildDevice({ id: 'laptop', name: 'Laptop', group: 'clients' }),
+      ],
+      connections: [
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'truenas' }),
+        buildConnection({ from: 'switch', to: 'backup' }),
+        buildConnection({ from: 'switch', to: 'workstation' }),
+        buildConnection({ from: 'switch', to: 'laptop' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const infra = byId.get('infra')!
+    const clients = byId.get('clients')!
+
+    expect(overlaps(infra, clients)).toBe(false)
+    expect(contains(infra, byId.get('edge')!)).toBe(true)
+    expect(contains(infra, byId.get('storage-zone')!)).toBe(true)
+
+    // infra's height should stay proportionate to its own content (2 rows
+    // of devices), not balloon from an unrelated sibling being dragged
+    // down with it on repeated (mis-triggered) vertical-shift passes.
+    expect(infra.height).toBeLessThan(DEFAULT_LAYOUT_OPTIONS.nodeHeight * 6)
+  })
+
+  it('does not overlap sibling subgroups within the same parent', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'datacenter', name: 'Datacenter' },
+        { id: 'compute', name: 'Compute', parent: 'datacenter' },
+        { id: 'storage', name: 'Storage', parent: 'datacenter' },
+      ],
+      devices: [
+        buildDevice({ id: 'gateway', name: 'Gateway', group: 'datacenter' }),
+        buildDevice({ id: 'vm-1', name: 'VM 1', group: 'compute' }),
+        buildDevice({ id: 'vm-2', name: 'VM 2', group: 'compute' }),
+        buildDevice({ id: 'nas-1', name: 'NAS 1', group: 'storage' }),
+        buildDevice({ id: 'nas-2', name: 'NAS 2', group: 'storage' }),
+      ],
+      connections: [
+        buildConnection({ from: 'gateway', to: 'vm-1' }),
+        buildConnection({ from: 'gateway', to: 'vm-2' }),
+        buildConnection({ from: 'gateway', to: 'nas-1' }),
+        buildConnection({ from: 'gateway', to: 'nas-2' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const compute = byId.get('compute')!
+    const storage = byId.get('storage')!
+
+    expect(overlaps(compute, storage)).toBe(false)
+    expect(contains(byId.get('datacenter')!, compute)).toBe(true)
+    expect(contains(byId.get('datacenter')!, storage)).toBe(true)
+  })
+
+  it('does not overlap any group pair in a complex multi-level topology', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'network-edge', name: 'Network Edge' },
+        { id: 'wireless', name: 'Wireless Access' },
+        { id: 'servers', name: 'Servers' },
+        { id: 'vm-cluster', name: 'VM Cluster', parent: 'servers' },
+        { id: 'bare-metal', name: 'Bare Metal', parent: 'servers' },
+        { id: 'clients', name: 'Clients' },
+        { id: 'iot', name: 'IoT' },
+      ],
+      devices: [
+        buildDevice({ id: 'modem', name: 'Modem', group: 'network-edge' }),
+        buildDevice({ id: 'router', name: 'Router', group: 'network-edge' }),
+        buildDevice({ id: 'switch', name: 'Switch' }),
+        buildDevice({ id: 'ap-1', name: 'AP 1', group: 'wireless' }),
+        buildDevice({ id: 'ap-2', name: 'AP 2', group: 'wireless' }),
+        buildDevice({ id: 'vm-host', name: 'VM Host', group: 'vm-cluster' }),
+        buildDevice({ id: 'vm-backup', name: 'VM Backup', group: 'vm-cluster' }),
+        buildDevice({ id: 'truenas', name: 'TrueNAS', group: 'bare-metal' }),
+        buildDevice({ id: 'desktop', name: 'Desktop', group: 'clients' }),
+        buildDevice({ id: 'laptop', name: 'Laptop', group: 'clients' }),
+        buildDevice({ id: 'camera', name: 'Camera', group: 'iot' }),
+        buildDevice({ id: 'sensor', name: 'Sensor', group: 'iot' }),
+      ],
+      connections: [
+        buildConnection({ from: 'modem', to: 'router' }),
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'ap-1' }),
+        buildConnection({ from: 'switch', to: 'ap-2' }),
+        buildConnection({ from: 'switch', to: 'vm-host' }),
+        buildConnection({ from: 'switch', to: 'vm-backup' }),
+        buildConnection({ from: 'switch', to: 'truenas' }),
+        buildConnection({ from: 'switch', to: 'desktop' }),
+        buildConnection({ from: 'switch', to: 'laptop' }),
+        buildConnection({ from: 'switch', to: 'camera' }),
+        buildConnection({ from: 'switch', to: 'sensor' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const named = graph.groups.filter((g) => g.group.name !== '')
+
+    for (let i = 0; i < named.length; i++) {
+      for (let j = i + 1; j < named.length; j++) {
+        const a = named[i]
+        const b = named[j]
+        const aIsParentOfB = b.group.parent === a.group.id
+        const bIsParentOfA = a.group.parent === b.group.id
+        if (aIsParentOfB || bIsParentOfA) continue
+        expect(overlaps(a, b), `${a.group.id} should not overlap ${b.group.id}`).toBe(false)
+      }
+    }
+  })
+
+  it('maintains group contiguity when YAML interleaves devices from different groups', () => {
+    const doc = buildDoc({
+      groups: [
+        { id: 'alpha', name: 'Alpha' },
+        { id: 'beta', name: 'Beta' },
+      ],
+      devices: [
+        buildDevice({ id: 'a1', name: 'A1', group: 'alpha' }),
+        buildDevice({ id: 'b1', name: 'B1', group: 'beta' }),
+        buildDevice({ id: 'a2', name: 'A2', group: 'alpha' }),
+        buildDevice({ id: 'b2', name: 'B2', group: 'beta' }),
+      ],
+      connections: [
+        buildConnection({ from: 'a1', to: 'b1' }),
+        buildConnection({ from: 'a2', to: 'b2' }),
+      ],
+    })
+
+    const graph = layout(doc)
+    const byId = new Map(graph.groups.map((g) => [g.group.id, g]))
+    const alpha = byId.get('alpha')!
+    const beta = byId.get('beta')!
+
+    expect(overlaps(alpha, beta)).toBe(false)
+
+    const maxGroupWidth =
+      2 * DEFAULT_LAYOUT_OPTIONS.nodeWidth +
+      DEFAULT_LAYOUT_OPTIONS.horizontalSpacing +
+      2 * DEFAULT_LAYOUT_OPTIONS.groupPadding
+    expect(alpha.width).toBeLessThanOrEqual(maxGroupWidth)
+    expect(beta.width).toBeLessThanOrEqual(maxGroupWidth)
   })
 })
 
@@ -677,5 +1117,87 @@ describe('layout › edge bundle', () => {
     const edge = findEdge(graph, 'a', 'b')
 
     expect(edge!.bundle).toBeUndefined()
+  })
+})
+
+// ─── Auto-clustering ────────────────────────────────────────────────
+
+/** Builds a doc with `core` fanning out to `leafCount` ungrouped leaves. */
+function buildFanOutDoc(
+  leafCount: number,
+  overrides: Partial<HomelabDocument> = {},
+): HomelabDocument {
+  const leaves = Array.from({ length: leafCount }, (_, i) => buildDevice({ id: `leaf-${i}` }))
+  return buildDoc({
+    devices: [buildDevice({ id: 'core', type: 'switch' }), ...leaves],
+    connections: leaves.map((leaf) => buildConnection({ from: 'core', to: leaf.id })),
+    ...overrides,
+  })
+}
+
+describe('layout › auto-clustering', () => {
+  it('does nothing below the minimum graph size, even with a high fan-out', () => {
+    // 9 devices total (1 core + 8 leaves) — below the default 25 minimum.
+    const doc = buildFanOutDoc(8)
+
+    const graph = layout(doc)
+
+    expect(graph.groups).toHaveLength(0)
+    expect(graph.nodes.find((n) => n.device.id === 'leaf-0')!.device.group).toBeUndefined()
+  })
+
+  it('clusters a high fan-out once the graph is large enough', () => {
+    // 1 core + 24 leaves = 25 devices, meeting the default minimum; 24
+    // ungrouped leaves comfortably clears the default fan-out threshold (6).
+    const doc = buildFanOutDoc(24)
+
+    const graph = layout(doc)
+
+    const synthetic = graph.groups.filter((g) => g.group.synthetic)
+    expect(synthetic).toHaveLength(1)
+    expect(synthetic[0].group.id).toBe('__autocluster__core')
+
+    const clusteredLeaves = graph.nodes.filter((n) => n.device.group === synthetic[0].group.id)
+    expect(clusteredLeaves).toHaveLength(24)
+  })
+
+  it('excludes devices already in an author-defined group', () => {
+    const doc = buildFanOutDoc(24, { groups: [{ id: 'rack', name: 'Rack' }] })
+    doc.devices[1].group = 'rack' // leaf-0 already grouped by the author
+
+    const graph = layout(doc)
+
+    const synthetic = graph.groups.find((g) => g.group.synthetic)!
+    const clusteredIds = graph.nodes
+      .filter((n) => n.device.group === synthetic.group.id)
+      .map((n) => n.device.id)
+
+    expect(clusteredIds).not.toContain('leaf-0')
+    expect(clusteredIds).toHaveLength(23)
+  })
+
+  it('excludes a child that has connection-children of its own (not a leaf)', () => {
+    const doc = buildFanOutDoc(24)
+    // leaf-0 fans out further, so it isn't a true topology leaf.
+    doc.devices.push(buildDevice({ id: 'grandchild' }))
+    doc.connections!.push(buildConnection({ from: 'leaf-0', to: 'grandchild' }))
+
+    const graph = layout(doc)
+
+    const synthetic = graph.groups.find((g) => g.group.synthetic)!
+    const clusteredIds = graph.nodes
+      .filter((n) => n.device.group === synthetic.group.id)
+      .map((n) => n.device.id)
+
+    expect(clusteredIds).not.toContain('leaf-0')
+  })
+
+  it('never mutates the original document', () => {
+    const doc = buildFanOutDoc(24)
+
+    layout(doc)
+
+    expect(doc.devices[1].group).toBeUndefined()
+    expect(doc.groups ?? []).toHaveLength(0)
   })
 })

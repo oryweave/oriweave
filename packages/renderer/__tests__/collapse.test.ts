@@ -3,6 +3,7 @@ import {
   buildDeviceToCollapsedGroupMap,
   getGroupSubtreeIds,
   rerouteEdgeForCollapse,
+  selectAutoCollapsedGroupIds,
   supernodeCentre,
   countDevicesInGroup,
 } from '../src/lib/collapse'
@@ -161,5 +162,22 @@ describe('countDevicesInGroup', () => {
 
     expect(countDevicesInGroup('g1', groups, nodes)).toBe(3)
     expect(countDevicesInGroup('g2', groups, nodes)).toBe(2)
+  })
+})
+
+describe('selectAutoCollapsedGroupIds', () => {
+  it('returns only synthetic (auto-clustered) group ids', () => {
+    const groups: Group[] = [
+      { id: 'g1', name: 'g1' },
+      { id: '__autocluster__core', name: '24 devices', synthetic: true },
+    ]
+
+    expect(selectAutoCollapsedGroupIds(groups)).toEqual(new Set(['__autocluster__core']))
+  })
+
+  it('returns an empty set when there are no synthetic groups', () => {
+    const groups: Group[] = [{ id: 'g1', name: 'g1' }]
+
+    expect(selectAutoCollapsedGroupIds(groups).size).toBe(0)
   })
 })

@@ -1,0 +1,7 @@
+{
+  "slug": "isp-pop",
+  "title": "ISP PoP — Nested Access Topology",
+  "description": "An Autonomous System's SP Lab containing a PoP and Access tier, demonstrating three levels of nested groups (AS / SP Lab / Access, PoP1).",
+  "category": "networking",
+  "tags": ["ISP", "BGP", "NESTED GROUPS"]
+}
