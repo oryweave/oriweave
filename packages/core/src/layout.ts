@@ -130,15 +130,40 @@ function buildHierarchy(
   const parentMap = new Map<string, string>()
   const childrenMap = new Map<string, string[]>()
 
+  // Detect multi-target hubs: nodes that multiple distinct devices point
+  // to. In a star topology (many devices → one switch), the switch
+  // appears as `to` from many different `from` sources — making it a
+  // child of just the first source produces a broken layout. Flip those
+  // relationships so the hub becomes the parent.
+  const sourcesPerTarget = new Map<string, Set<string>>()
   for (const conn of connections) {
     if (!ids.has(conn.from) || !ids.has(conn.to)) continue
-    if (!parentMap.has(conn.to)) {
-      parentMap.set(conn.to, conn.from)
+    const s = sourcesPerTarget.get(conn.to) ?? new Set()
+    s.add(conn.from)
+    sourcesPerTarget.set(conn.to, s)
+  }
+  const multiTargetHubs = new Set<string>()
+  for (const [nodeId, sources] of sourcesPerTarget) {
+    if (sources.size > 1) multiTargetHubs.add(nodeId)
+  }
+
+  for (const conn of connections) {
+    if (!ids.has(conn.from) || !ids.has(conn.to)) continue
+
+    let parent = conn.from
+    let child = conn.to
+    if (multiTargetHubs.has(conn.to)) {
+      parent = conn.to
+      child = conn.from
     }
-    const existing = childrenMap.get(conn.from) ?? []
-    if (!existing.includes(conn.to)) {
-      existing.push(conn.to)
-      childrenMap.set(conn.from, existing)
+
+    if (!parentMap.has(child)) {
+      parentMap.set(child, parent)
+    }
+    const existing = childrenMap.get(parent) ?? []
+    if (!existing.includes(child)) {
+      existing.push(child)
+      childrenMap.set(parent, existing)
     }
   }
 

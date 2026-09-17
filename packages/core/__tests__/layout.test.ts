@@ -159,6 +159,71 @@ describe('layout › basic positioning', () => {
   })
 })
 
+// ─── Star topology / hub detection ───────────────────────────────
+
+describe('layout › star topology', () => {
+  it('places the hub above its spokes when many devices point TO it', () => {
+    const doc = buildDoc({
+      devices: [
+        buildDevice({ id: 'switch', name: 'Core Switch', type: 'switch' }),
+        buildDevice({ id: 'srv-1', name: 'Server 1' }),
+        buildDevice({ id: 'srv-2', name: 'Server 2' }),
+        buildDevice({ id: 'srv-3', name: 'Server 3' }),
+      ],
+      connections: [
+        buildConnection({ from: 'srv-1', to: 'switch' }),
+        buildConnection({ from: 'srv-2', to: 'switch' }),
+        buildConnection({ from: 'srv-3', to: 'switch' }),
+      ],
+    })
+
+    const graph = layout(doc)
+
+    const hub = findNode(graph, 'switch')!
+    const srv1 = findNode(graph, 'srv-1')!
+    const srv2 = findNode(graph, 'srv-2')!
+    const srv3 = findNode(graph, 'srv-3')!
+
+    expect(hub.depth).toBe(0)
+    expect(srv1.depth).toBe(1)
+    expect(srv2.depth).toBe(1)
+    expect(srv3.depth).toBe(1)
+    expect(hub.y).toBeLessThan(srv1.y)
+  })
+
+  it('preserves the from→to convention when no node is a multi-target', () => {
+    const doc = buildDoc({
+      devices: [
+        buildDevice({ id: 'router', name: 'Router' }),
+        buildDevice({ id: 'switch', name: 'Switch' }),
+        buildDevice({ id: 'server', name: 'Server' }),
+      ],
+      connections: [
+        buildConnection({ from: 'router', to: 'switch' }),
+        buildConnection({ from: 'switch', to: 'server' }),
+      ],
+    })
+
+    const graph = layout(doc)
+
+    expect(findNode(graph, 'router')!.depth).toBe(0)
+    expect(findNode(graph, 'switch')!.depth).toBe(1)
+    expect(findNode(graph, 'server')!.depth).toBe(2)
+  })
+
+  it('does not break when a device has exactly one incoming connection (not a hub)', () => {
+    const doc = buildDoc({
+      devices: [buildDevice({ id: 'a', name: 'A' }), buildDevice({ id: 'b', name: 'B' })],
+      connections: [buildConnection({ from: 'a', to: 'b' })],
+    })
+
+    const graph = layout(doc)
+
+    expect(findNode(graph, 'a')!.depth).toBe(0)
+    expect(findNode(graph, 'b')!.depth).toBe(1)
+  })
+})
+
 // ─── Card height (port-row overflow) ───────────────────────────────
 
 describe('layout › card height', () => {
