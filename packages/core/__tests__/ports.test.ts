@@ -131,7 +131,7 @@ describe('enumeratePorts', () => {
 // ─── Assignment carries labels ────────────────────────────────────
 
 describe('assignPorts › label propagation', () => {
-  it('attaches the label to an assignment when the consumed port is labelled', () => {
+  it('skips greedy assignment on a device with a declared port map', () => {
     const device = buildDeviceWithLabelledPorts()
     const peer = buildDevice({ id: 'peer', interfaces: { ethernet: { count: 1 } } })
     const conn = buildConnection({ from: device.id, to: peer.id, type: 'ethernet' })
@@ -139,18 +139,37 @@ describe('assignPorts › label propagation', () => {
     const assignments = assignPorts([device, peer], [conn])
 
     const routerSide = assignments.get(device.id)!
+    expect(routerSide).toHaveLength(0)
+
+    const peerSide = assignments.get(peer.id)!
+    expect(peerSide).toHaveLength(1)
+  })
+
+  it('attaches the label to a pinned assignment on a device with labelled ports', () => {
+    const device = buildDeviceWithLabelledPorts()
+    const peer = buildDevice({ id: 'peer', interfaces: { ethernet: { count: 1 } } })
+    const conn = buildConnection({
+      from: device.id,
+      to: peer.id,
+      fromPort: 'WAN',
+      type: 'ethernet',
+    })
+
+    const assignments = assignPorts([device, peer], [conn])
+
+    const routerSide = assignments.get(device.id)!
     expect(routerSide).toHaveLength(1)
-    expect(routerSide[0].label).toBe('WAN') // first ethernet port = WAN
+    expect(routerSide[0].label).toBe('WAN')
     expect(routerSide[0].portIndex).toBe(0)
   })
 
-  it('omits label on an anonymous port even when the device has some labelled ports', () => {
+  it('skips greedy on partial-label port maps too', () => {
     const device = buildDevice({
       id: 'router',
       interfaces: {
         ethernet: {
           count: 3,
-          ports: [{ label: 'WAN' }], // only port 0 labelled
+          ports: [{ label: 'WAN' }],
         },
       },
     })
@@ -166,9 +185,7 @@ describe('assignPorts › label propagation', () => {
     )
 
     const routerSide = assignments.get(device.id)!
-    expect(routerSide).toHaveLength(2)
-    expect(routerSide[0].label).toBe('WAN') // index 0
-    expect(routerSide[1].label).toBeUndefined() // index 1 = anonymous
+    expect(routerSide).toHaveLength(0)
   })
 
   it('does not attach a label when the device has no ports[] declarations', () => {
@@ -334,7 +351,7 @@ describe('assignPorts › pinned references', () => {
     expect(routerSide[0].label).toBe('LAN3')
   })
 
-  it('greedy assignment skips a slot already pinned on the same (device, interfaceType)', () => {
+  it('only keeps the pinned assignment when greedy is blocked by a port map', () => {
     const router = buildDeviceWithLabelledPorts()
     const a = buildDevice({ id: 'a', interfaces: { ethernet: { count: 1 } } })
     const b = buildDevice({ id: 'b', interfaces: { ethernet: { count: 1 } } })
@@ -344,20 +361,34 @@ describe('assignPorts › pinned references', () => {
       [
         // First connection pins ethernet index 0 (WAN).
         buildConnection({ from: 'router', to: 'a', fromPort: 'WAN', type: 'ethernet' }),
-        // Second connection is greedy; it must skip 0 and land on 1.
+        // Second connection has no fromPort — greedy is blocked (router has port map).
         buildConnection({ from: 'router', to: 'b', type: 'ethernet' }),
       ],
     )
 
     const routerSide = assignments.get('router')!
-    expect(routerSide).toHaveLength(2)
-
-    // Pin came first.
+    expect(routerSide).toHaveLength(1)
     expect(routerSide[0].portIndex).toBe(0)
     expect(routerSide[0].connectedTo).toBe('a')
-    // Greedy landed on the next free slot, NOT on 0.
-    expect(routerSide[1].portIndex).toBe(1)
-    expect(routerSide[1].connectedTo).toBe('b')
+  })
+
+  it('greedy still works on devices without a port map', () => {
+    const sw = buildDevice({ id: 'sw', interfaces: { ethernet: { count: 4 } } })
+    const a = buildDevice({ id: 'a', interfaces: { ethernet: { count: 1 } } })
+    const b = buildDevice({ id: 'b', interfaces: { ethernet: { count: 1 } } })
+
+    const assignments = assignPorts(
+      [sw, a, b],
+      [
+        buildConnection({ from: 'sw', to: 'a', type: 'ethernet' }),
+        buildConnection({ from: 'sw', to: 'b', type: 'ethernet' }),
+      ],
+    )
+
+    const swSide = assignments.get('sw')!
+    expect(swSide).toHaveLength(2)
+    expect(swSide[0].portIndex).toBe(0)
+    expect(swSide[1].portIndex).toBe(1)
   })
 
   it("copies Connection.bundle onto each member's PortAssignment", () => {
