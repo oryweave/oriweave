@@ -224,28 +224,32 @@ function assignPorts(devices: Device[], connections: Connection[]): Map<string, 
             : 'ethernet'
 
     if (!sideStates[i].fromPinned) {
-      greedyAssign(
-        conn.from,
-        conn.to,
-        ifaceType,
-        conn.speed,
-        conn.bundle,
-        assignments,
-        usedSlots,
-        labelLookups,
-      )
+      if (!hasExplicitPortMap(deviceLookup.get(conn.from), ifaceType)) {
+        greedyAssign(
+          conn.from,
+          conn.to,
+          ifaceType,
+          conn.speed,
+          conn.bundle,
+          assignments,
+          usedSlots,
+          labelLookups,
+        )
+      }
     }
     if (conn.direction !== 'one-way' && !sideStates[i].toPinned) {
-      greedyAssign(
-        conn.to,
-        conn.from,
-        ifaceType,
-        conn.speed,
-        conn.bundle,
-        assignments,
-        usedSlots,
-        labelLookups,
-      )
+      if (!hasExplicitPortMap(deviceLookup.get(conn.to), ifaceType)) {
+        greedyAssign(
+          conn.to,
+          conn.from,
+          ifaceType,
+          conn.speed,
+          conn.bundle,
+          assignments,
+          usedSlots,
+          labelLookups,
+        )
+      }
     }
   })
 
@@ -282,6 +286,22 @@ function pinAssignment(
 
   deviceAssignments.push(assignment)
   used.add(`${ifaceType}:${portIndex}`)
+}
+
+/**
+ * Whether a device has an author-declared port map for the given interface type.
+ * Devices with explicit `ports[]` arrays should only have pinned assignments —
+ * greedy auto-placement would silently claim a specific labelled port and
+ * render it as active, indistinguishable from a deliberately wired port.
+ */
+function hasExplicitPortMap(
+  device: Device | undefined,
+  ifaceType: EnumerableInterfaceType,
+): boolean {
+  if (!device?.interfaces) return false
+  if (ifaceType === 'wifi') return false
+  const group = device.interfaces[ifaceType]
+  return (group?.ports?.length ?? 0) > 0
 }
 
 /** Greedy: hands out the next free index for (device, ifaceType), skipping pinned slots. */
